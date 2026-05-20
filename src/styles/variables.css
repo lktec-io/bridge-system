@@ -1,0 +1,57 @@
+/* ============================================================
+   DESIGN TOKENS — all CSS custom properties
+   ============================================================ */
+:root {
+  /* Brand */
+  --primary:       #1a56db;
+  --primary-dark:  #1341b0;
+  --primary-light: #e8f0fe;
+
+  /* Status */
+  --success:       #16a34a;
+  --success-light: #dcfce7;
+  --warning:       #d97706;
+  --warning-light: #fef3c7;
+  --danger:        #dc2626;
+  --danger-light:  #fee2e2;
+  --info:          #0891b2;
+  --info-light:    #e0f2fe;
+
+  /* Neutral */
+  --secondary:     #6b7280;
+  --bg:            #f1f5f9;
+  --bg-card:       #ffffff;
+  --border:        #e2e8f0;
+  --border-focus:  #1a56db;
+  --text:          #0f172a;
+  --text-muted:    #64748b;
+  --text-light:    #94a3b8;
+
+  /* Sidebar colours (separate from page) */
+  --sidebar-bg:       #0f172a;
+  --sidebar-hover:    rgba(255,255,255,.07);
+  --sidebar-active:   var(--primary);
+  --sidebar-text:     rgba(255,255,255,.65);
+  --sidebar-divider:  rgba(255,255,255,.08);
+
+  /* Layout dimensions */
+  --sidebar-w:  260px;
+  --header-h:   64px;
+
+  /* Shape */
+  --radius:    10px;
+  --radius-sm:  6px;
+  --radius-lg: 14px;
+
+  /* Elevation */
+  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,.12);
+
+  /* Typography */
+  --font:       'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Motion */
+  --transition: 200ms ease;
+}

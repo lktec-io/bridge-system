@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String   @map("first_name")
+  lastName  String   @map("last_name")
+  email     String   @unique
+  password  String
+  role      Role     @default(ENGINEER)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  inspections  Inspection[]
+  historyLogs  HistoryLog[]
+
+  @@map("users")
+}
+
+model Bridge {
+  id           Int      @id @default(autoincrement())
+  serialNumber String   @unique @map("serial_number")
+  structureType String  @map("structure_type")
+  section      String
+  chainage     Float
+  northing     Float?
+  easting      Float?
+  altitude     Float?
+  length       Float?
+  width        Float?
+  height       Float?
+  numberOfSpans Int?    @map("number_of_spans")
+  remark       String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  inspections Inspection[]
+  photos      Photo[]
+  historyLogs HistoryLog[]
+
+  @@map("bridges")
+}
+
+model Inspection {
+  id              Int             @id @default(autoincrement())
+  bridgeId        Int             @map("bridge_id")
+  inspectorName   String          @map("inspector_name")
+  inspectionDate  DateTime        @map("inspection_date")
+  defectDescription String?       @db.Text @map("defect_description")
+  remedy          String?         @db.Text
+  conditionStatus   ConditionStatus @map("condition_status")
+  lastVisitDate     DateTime?       @map("last_visit_date")
+  isResolved        Boolean         @default(false) @map("is_resolved")
+  resolvedAt        DateTime?       @map("resolved_at")
+  resolvedBy        String?         @map("resolved_by")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  userId            Int?            @map("user_id")
+
+  bridge Bridge @relation(fields: [bridgeId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("inspections")
+}
+
+model Photo {
+  id        Int      @id @default(autoincrement())
+  bridgeId  Int      @map("bridge_id")
+  photoUrl  String   @map("photo_url")
+  photoType PhotoType @map("photo_type")
+  publicId  String?  @map("public_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  bridge Bridge @relation(fields: [bridgeId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+model HistoryLog {
+  id           Int      @id @default(autoincrement())
+  bridgeId     Int      @map("bridge_id")
+  userId       Int?     @map("user_id")
+  action       String
+  changedFields Json    @map("changed_fields")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  bridge Bridge @relation(fields: [bridgeId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("history_logs")
+}
+
+enum Role {
+  ADMIN
+  ENGINEER
+}
+
+enum ConditionStatus {
+  GOOD
+  FAIR
+  POOR
+}
+
+enum PhotoType {
+  PHOTO_1
+  PHOTO_2
+}
