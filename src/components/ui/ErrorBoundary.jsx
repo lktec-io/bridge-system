@@ -20,10 +20,15 @@ export default class ErrorBoundary extends Component {
         <div className="empty-state" style={{ padding: '60px 24px' }}>
           <MdErrorOutline style={{ color: 'var(--danger)', fontSize: 48, opacity: 1 }} />
           <h3>Something went wrong</h3>
-          <p>An unexpected error occurred. Try again or navigate back.</p>
-          <button className="btn btn-primary btn-sm" onClick={this.reset}>
-            <MdRefresh /> Try Again
-          </button>
+          <p>An unexpected error occurred. Please try again or navigate to another page.</p>
+          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+            <button className="btn btn-primary btn-sm" onClick={this.reset}>
+              <MdRefresh /> Try Again
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={() => window.location.href = '/dashboard'}>
+              Go to Dashboard
+            </button>
+          </div>
         </div>
       );
     }

@@ -11,9 +11,21 @@ const ACTION_META = {
   DEFECT_RESOLVED:    { label: 'Defect resolved',    cls: 'resolve', emoji: '✅' },
 };
 
+// Safe fallback — action could be undefined if API returns an unexpected shape
 function getMeta(action) {
-  return ACTION_META[action] ?? { label: action.replace(/_/g, ' '), cls: 'update', emoji: '📝' };
+  if (!action) return { label: 'System event', cls: 'update', emoji: '📝' };
+  return ACTION_META[action] ?? {
+    label: action.replace(/_/g, ' '),
+    cls: 'update',
+    emoji: '📝',
+  };
 }
+
+const safeFromNow = (d) => {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '' : formatDistanceToNow(dt, { addSuffix: true });
+};
 
 export default function RecentActivity({ logs = [] }) {
   return (
@@ -33,7 +45,8 @@ export default function RecentActivity({ logs = [] }) {
         ) : (
           <div className="activity-feed">
             {logs.map((log) => {
-              const meta = getMeta(log.action);
+              // Field renamed from `action` to `actionType` in schema v2 — use actionType
+              const meta = getMeta(log.actionType);
               return (
                 <div key={log.id} className="activity-item">
                   <div className={`activity-dot ${meta.cls}`}>{meta.emoji}</div>
@@ -50,7 +63,7 @@ export default function RecentActivity({ logs = [] }) {
                     </span>
                   </div>
                   <div className="activity-time">
-                    {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                    {safeFromNow(log.createdAt)}
                   </div>
                 </div>
               );

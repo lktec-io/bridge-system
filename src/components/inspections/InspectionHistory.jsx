@@ -19,7 +19,14 @@ const ACTION_LABEL = {
 };
 
 const emoji = (action) => ACTION_EMOJI[action] ?? '📝';
-const label = (action) => ACTION_LABEL[action] ?? action.replace(/_/g, ' ');
+// Guard against null/undefined actionType — action.replace() crashes if action is falsy
+const label = (action) => ACTION_LABEL[action] ?? (action ? action.replace(/_/g, ' ') : 'System event');
+
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
 
 export default function InspectionHistory({ logs = [] }) {
   if (logs.length === 0) {
@@ -42,7 +49,7 @@ export default function InspectionHistory({ logs = [] }) {
               </p>
             )}
             <div className="timeline-time">
-              {format(new Date(log.createdAt), 'dd MMM yyyy, HH:mm')}
+              {safeDate(log.createdAt, 'dd MMM yyyy, HH:mm')}
             </div>
           </div>
         </div>
