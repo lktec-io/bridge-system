@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import ErrorBoundary from '../ui/ErrorBoundary';
 
 export default function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,7 +18,9 @@ export default function MainLayout() {
       <div className="main-content">
         <Navbar onMenuClick={toggleSidebar} />
         <main className="page-content">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

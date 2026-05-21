@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { bridgesAPI, inspectionsAPI, photosAPI } from '../api/bridges';
@@ -25,26 +25,44 @@ L.Icon.Default.mergeOptions({
 });
 
 const condClass = (s) => ({ GOOD: 'good', FAIR: 'fair', POOR: 'poor' })[s] ?? 'none';
-const photoUrl  = (p) => p?.photoUrl?.startsWith('http') ? p.photoUrl : `http://localhost:5000${p?.photoUrl}`;
+
+const photoUrl = (p) => {
+  if (!p?.photoUrl) return '';
+  if (p.photoUrl.startsWith('http')) return p.photoUrl;
+  const base = import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || '';
+  return `${base}${p.photoUrl}`;
+};
+
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
 
 export default function BridgeDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAdmin, user } = useAuth();
 
-  const [bridge,       setBridge]       = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [tab,          setTab]          = useState('overview');
-  const [deleteModal,  setDeleteModal]  = useState(false);
-  const [deleting,     setDeleting]     = useState(false);
-  const [resolving,    setResolving]    = useState(null);
-  const [deleteInsId,  setDeleteInsId]  = useState(null);
-  const [uploadType,   setUploadType]   = useState(null);
-  const [uploadFile,   setUploadFile]   = useState(null);
-  const [uploadLoading,setUploadLoading]= useState(false);
-  const [uploadError,  setUploadError]  = useState('');
+  const [bridge,        setBridge]        = useState(null);
+  const [loading,       setLoading]       = useState(true);
+  const [tab,           setTab]           = useState('overview');
+  const [deleteModal,   setDeleteModal]   = useState(false);
+  const [deleting,      setDeleting]      = useState(false);
+  const [resolving,     setResolving]     = useState(null);
+  const [deleteInsId,   setDeleteInsId]   = useState(null);
+  const [uploadType,    setUploadType]    = useState(null);
+  const [uploadFile,    setUploadFile]    = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError,   setUploadError]   = useState('');
+  const [actionError,   setActionError]   = useState('');
 
-  const fetchBridge = async () => {
+  const showError = (msg) => {
+    setActionError(msg);
+    setTimeout(() => setActionError(''), 5000);
+  };
+
+  const fetchBridge = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await bridgesAPI.getById(id);
@@ -54,14 +72,14 @@ export default function BridgeDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  useEffect(() => { fetchBridge(); }, [id]);
+  useEffect(() => { fetchBridge(); }, [fetchBridge]);
 
   const handleDeleteBridge = async () => {
     setDeleting(true);
     try { await bridgesAPI.delete(id); navigate('/bridges'); }
-    catch { alert('Failed to delete bridge'); setDeleting(false); }
+    catch { showError('Failed to delete bridge'); setDeleting(false); }
   };
 
   const handleResolve = async (insId) => {
@@ -69,7 +87,7 @@ export default function BridgeDetails() {
     try {
       await inspectionsAPI.resolve(insId, user ? `${user.firstName} ${user.lastName}` : '');
       await fetchBridge();
-    } catch { alert('Failed to mark as resolved'); }
+    } catch { showError('Failed to mark as resolved'); }
     finally { setResolving(null); }
   };
 
@@ -92,12 +110,12 @@ export default function BridgeDetails() {
   const handlePhotoDelete = async (photoId) => {
     if (!window.confirm('Delete this photo?')) return;
     try { await photosAPI.delete(photoId); await fetchBridge(); }
-    catch { alert('Failed to delete photo'); }
+    catch { showError('Failed to delete photo'); }
   };
 
   const handleDeleteInspection = async () => {
     try { await inspectionsAPI.delete(deleteInsId); await fetchBridge(); setDeleteInsId(null); }
-    catch { alert('Failed to delete inspection'); }
+    catch { showError('Failed to delete inspection'); }
   };
 
   if (loading) return <div className="loading-center"><div className="spinner" /><span>Loading bridge profile...</span></div>;
@@ -109,11 +127,11 @@ export default function BridgeDetails() {
     </div>
   );
 
-  const latestIns      = bridge.inspections?.[0];
-  const photo1         = bridge.photos?.find((p) => p.photoType === 'PHOTO_1');
-  const photo2         = bridge.photos?.find((p) => p.photoType === 'PHOTO_2');
-  const hasCoords      = bridge.northing && bridge.easting;
-  const unresolvedCount= bridge.inspections?.filter((i) => i.defectDescription && !i.isResolved).length ?? 0;
+  const latestIns       = bridge.inspections?.[0];
+  const photo1          = bridge.photos?.find((p) => p.photoType === 'PHOTO_1');
+  const photo2          = bridge.photos?.find((p) => p.photoType === 'PHOTO_2');
+  const hasCoords       = bridge.northing && bridge.easting;
+  const unresolvedCount = bridge.inspections?.filter((i) => i.defectDescription && !i.isResolved).length ?? 0;
 
   return (
     <div style={{ maxWidth: 1020, margin: '0 auto' }}>
@@ -124,6 +142,15 @@ export default function BridgeDetails() {
         <span className="sep">/</span>
         <span className="current">{bridge.serialNumber}</span>
       </nav>
+
+      {/* Action error banner */}
+      {actionError && (
+        <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MdErrorOutline />
+          <span style={{ flex: 1 }}>{actionError}</span>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16, lineHeight: 1 }} onClick={() => setActionError('')}>✕</button>
+        </div>
+      )}
 
       {/* Profile Header */}
       <div className="bridge-profile-header">
@@ -136,26 +163,26 @@ export default function BridgeDetails() {
                 {latestIns && <ConditionBadge status={latestIns.conditionStatus} />}
                 {unresolvedCount > 0 && (
                   <span className="badge" style={{ background: '#fff7ed', color: '#ea580c' }}>
-                    ⚠ {unresolvedCount} unresolved
+                    {unresolvedCount} unresolved
                   </span>
                 )}
               </div>
               <p style={{ color: 'var(--text-muted)', marginTop: 4, fontSize: 14 }}>
                 {bridge.structureType}
-                {bridge.section   && <> · <strong>{bridge.section}</strong></>}
-                {bridge.chainage  && <> · Km {Number(bridge.chainage).toFixed(3)}</>}
+                {bridge.section  && <> · <strong>{bridge.section}</strong></>}
+                {bridge.chainage && <> · Km {Number(bridge.chainage).toFixed(3)}</>}
               </p>
               <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 12, color: 'var(--text-light)' }}>
-                  Registered {format(new Date(bridge.createdAt), 'dd MMM yyyy')}
+                  Registered {safeDate(bridge.createdAt, 'dd MMM yyyy')}
                 </span>
                 {latestIns ? (
                   <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                    Last inspected: <strong>{format(new Date(latestIns.inspectionDate), 'dd MMM yyyy')}</strong>
+                    Last inspected: <strong>{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</strong>
                     {' '}by {latestIns.inspectorName}
                   </span>
                 ) : (
-                  <span style={{ fontSize: 12, color: 'var(--warning)', fontWeight: 600 }}>⚠ Not yet inspected</span>
+                  <span style={{ fontSize: 12, color: 'var(--warning)', fontWeight: 600 }}>Not yet inspected</span>
                 )}
               </div>
             </div>
@@ -192,11 +219,11 @@ export default function BridgeDetails() {
               <div className="card-header"><div className="card-title">Bridge Identity</div></div>
               <div className="card-body">
                 {[
-                  ['Serial Number',    bridge.serialNumber],
-                  ['Structure Type',   bridge.structureType],
-                  ['Section / Route',  bridge.section],
-                  ['Chainage',         `${Number(bridge.chainage).toFixed(3)} Km`],
-                  ['Number of Spans',  bridge.numberOfSpans ?? '—'],
+                  ['Serial Number',   bridge.serialNumber],
+                  ['Structure Type',  bridge.structureType],
+                  ['Section / Route', bridge.section],
+                  ['Chainage',        bridge.chainage ? `${Number(bridge.chainage).toFixed(3)} Km` : '—'],
+                  ['Number of Spans', bridge.numberOfSpans ?? '—'],
                 ].map(([k, v]) => (
                   <div key={k} className="detail-field"><dt>{k}</dt><dd>{v ?? '—'}</dd></div>
                 ))}
@@ -230,7 +257,7 @@ export default function BridgeDetails() {
                   </div>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 8 }}>Last Inspection</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{format(new Date(latestIns.inspectionDate), 'dd MMM yyyy')}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>by {latestIns.inspectorName}</div>
                   </div>
                   <div>
@@ -239,7 +266,7 @@ export default function BridgeDetails() {
                       ? latestIns.isResolved
                         ? <span className="resolve-status resolved"><MdCheckCircle size={13} /> Resolved</span>
                         : <span className="resolve-status unresolved"><MdWarning size={13} /> Unresolved</span>
-                      : <span style={{ fontSize: 13, color: 'var(--success)' }}>✓ No defects reported</span>
+                      : <span style={{ fontSize: 13, color: 'var(--success)' }}>No defects reported</span>
                     }
                   </div>
                 </div>
@@ -301,7 +328,6 @@ export default function BridgeDetails() {
               <MdAdd /> Add Inspection
             </Link>
           </div>
-
           {bridge.inspections?.length === 0 ? (
             <div className="empty-state card" style={{ padding: '50px 24px' }}>
               <MdFindInPage />
@@ -337,9 +363,7 @@ export default function BridgeDetails() {
                   <>
                     <img src={photoUrl(photo)} alt={label} />
                     <span className="photo-label">{label}</span>
-                    <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo">
-                      ✕
-                    </button>
+                    <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo">✕</button>
                   </>
                 ) : (
                   <div className="photo-placeholder" onClick={() => setUploadType(type)}>
@@ -368,7 +392,11 @@ export default function BridgeDetails() {
             <MapContainer center={[bridge.northing, bridge.easting]} zoom={14} style={{ height: 420 }}>
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap" />
               <Marker position={[bridge.northing, bridge.easting]}>
-                <Popup><strong>{bridge.serialNumber}</strong><br />{bridge.section}<br />Km {Number(bridge.chainage).toFixed(3)}</Popup>
+                <Popup>
+                  <strong>{bridge.serialNumber}</strong><br />
+                  {bridge.section}<br />
+                  Km {Number(bridge.chainage || 0).toFixed(3)}
+                </Popup>
               </Marker>
             </MapContainer>
           </div>

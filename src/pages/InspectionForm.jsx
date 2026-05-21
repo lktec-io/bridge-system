@@ -5,6 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { MdSave, MdArrowBack, MdErrorOutline, MdInfo, MdWarning } from 'react-icons/md';
 
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
+
 const empty = {
   inspectorName: '', inspectionDate: '', defectDescription: '',
   remedy: '', conditionStatus: '', lastVisitDate: '',
@@ -126,13 +132,13 @@ export default function InspectionForm() {
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{bridge.serialNumber}</div>
                 <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                  {bridge.structureType} · {bridge.section} · Km {bridge.chainage?.toFixed(3)}
+                  {bridge.structureType} · {bridge.section} · Km {Number(bridge.chainage || 0).toFixed(3)}
                 </div>
               </div>
               {latestIns && (
                 <div style={{ flexShrink: 0, textAlign: 'right' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 4 }}>Previous Inspection</div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{format(new Date(latestIns.inspectionDate), 'dd MMM yyyy')}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</div>
                   <div style={{ marginTop: 2 }}>
                     <span className={`badge ${latestIns.conditionStatus === 'GOOD' ? 'badge-good' : latestIns.conditionStatus === 'FAIR' ? 'badge-fair' : 'badge-poor'}`}>
                       {latestIns.conditionStatus}

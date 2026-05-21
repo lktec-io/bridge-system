@@ -3,6 +3,17 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { MdCheckCircle, MdWarning, MdEdit, MdDelete } from 'react-icons/md';
 import { ConditionBadge } from '../ui/Badge';
 
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
+const safeFromNow = (d) => {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '' : formatDistanceToNow(dt, { addSuffix: true });
+};
+
 const condClass = (s) => ({ GOOD: 'card-good', FAIR: 'card-fair', POOR: 'card-poor' })[s] ?? '';
 
 export default function InspectionCard({
@@ -29,7 +40,7 @@ export default function InspectionCard({
       <div className="inspection-card-head">
         <div className="inspection-card-meta">
           <span className="inspection-card-date">
-            {format(new Date(ins.inspectionDate), 'dd MMMM yyyy')}
+            {safeDate(ins.inspectionDate, 'dd MMMM yyyy')}
           </span>
           <span className="inspection-card-inspector">— {ins.inspectorName}</span>
           <ConditionBadge status={ins.conditionStatus} />
@@ -103,7 +114,7 @@ export default function InspectionCard({
       {ins.user && (
         <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-light)', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
           Recorded by {ins.user.firstName} {ins.user.lastName}
-          {' · '}{formatDistanceToNow(new Date(ins.createdAt), { addSuffix: true })}
+          {' · '}{safeFromNow(ins.createdAt)}
         </div>
       )}
     </div>

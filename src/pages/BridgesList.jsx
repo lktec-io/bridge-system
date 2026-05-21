@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { bridgesAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
-import { MdAdd, MdAccountBalance, MdRefresh } from 'react-icons/md';
+import { MdAdd, MdAccountBalance, MdRefresh, MdErrorOutline } from 'react-icons/md';
 import BridgeSearch from '../components/bridges/BridgeSearch';
 import BridgeTable  from '../components/bridges/BridgeTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -10,10 +10,11 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 export default function BridgesList() {
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [bridges,   setBridges]   = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [deleteId,  setDeleteId]  = useState(null);
-  const [deleting,  setDeleting]  = useState(false);
+  const [bridges,     setBridges]     = useState([]);
+  const [loading,     setLoading]     = useState(true);
+  const [deleteId,    setDeleteId]    = useState(null);
+  const [deleting,    setDeleting]    = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const [search,     setSearch]     = useState(searchParams.get('search')     || '');
   const [condition,  setCondition]  = useState(searchParams.get('condition')  || '');
@@ -62,7 +63,7 @@ export default function BridgesList() {
       await bridgesAPI.delete(deleteId);
       setBridges((prev) => prev.filter((b) => b.id !== deleteId));
       setDeleteId(null);
-    } catch { alert('Failed to delete bridge'); }
+    } catch { setDeleteError('Failed to delete bridge. Please try again.'); setDeleteId(null); }
     finally { setDeleting(false); }
   };
 
@@ -70,6 +71,13 @@ export default function BridgesList() {
 
   return (
     <div>
+      {deleteError && (
+        <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MdErrorOutline />
+          <span style={{ flex: 1 }}>{deleteError}</span>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16 }} onClick={() => setDeleteError('')}>✕</button>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h2>Bridge Registry</h2>

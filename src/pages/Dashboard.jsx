@@ -2,6 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { bridgesAPI } from '../api/bridges';
 import { format } from 'date-fns';
+
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
 import {
   MdAccountBalance, MdWarning, MdError, MdCheckCircle,
   MdArrowForward, MdRefresh, MdAdd, MdFiberManualRecord,
@@ -153,7 +159,7 @@ export default function Dashboard() {
                     </td>
                     <td className="muted">{ins.bridge?.section}</td>
                     <td>{ins.inspectorName}</td>
-                    <td className="muted">{format(new Date(ins.inspectionDate), 'dd MMM yyyy')}</td>
+                    <td className="muted">{safeDate(ins.inspectionDate, 'dd MMM yyyy')}</td>
                     <td><ConditionBadge status={ins.conditionStatus} /></td>
                     <td style={{ textAlign: 'center' }}>
                       <Link to={`/bridges/${ins.bridgeId}`} className="btn btn-ghost btn-sm no-print">View</Link>
@@ -206,7 +212,7 @@ export default function Dashboard() {
                       </td>
                       <td>{b.section}</td>
                       <td className="muted">
-                        {ins ? format(new Date(ins.inspectionDate), 'dd MMM yyyy') : '—'}
+                        {ins ? safeDate(ins.inspectionDate, 'dd MMM yyyy') : '—'}
                       </td>
                       <td>{ins?.inspectorName ?? '—'}</td>
                       <td style={{ fontSize: 12, maxWidth: 220, color: 'var(--text-muted)' }}>

@@ -2,20 +2,27 @@ import { useEffect, useState } from 'react';
 import { authAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { MdPeople, MdEdit, MdCheckCircle, MdDelete } from 'react-icons/md';
+import { MdPeople, MdEdit, MdCheckCircle, MdDelete, MdErrorOutline } from 'react-icons/md';
 import { RoleBadge } from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
 
 export default function Users() {
   const { user: currentUser } = useAuth();
   const [users,       setUsers]       = useState([]);
   const [loading,     setLoading]     = useState(true);
-  const [editTarget,  setEditTarget]  = useState(null);   // { id, role }
+  const [editTarget,  setEditTarget]  = useState(null);
   const [newRole,     setNewRole]     = useState('');
   const [saving,      setSaving]      = useState(false);
-  const [deleteTarget,setDeleteTarget]= useState(null);   // { id, name }
+  const [deleteTarget,setDeleteTarget]= useState(null);
   const [deleting,    setDeleting]    = useState(false);
+  const [error,       setError]       = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -36,7 +43,7 @@ export default function Users() {
       await authAPI.updateUserRole(editTarget.id, newRole);
       setUsers((prev) => prev.map((u) => u.id === editTarget.id ? { ...u, role: newRole } : u));
       closeEdit();
-    } catch { alert('Failed to update role'); }
+    } catch { setError('Failed to update role'); closeEdit(); }
     finally { setSaving(false); }
   };
 
@@ -47,7 +54,7 @@ export default function Users() {
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete user');
+      setError(err.response?.data?.message || 'Failed to delete user');
     } finally { setDeleting(false); }
   };
 
@@ -55,6 +62,13 @@ export default function Users() {
 
   return (
     <div>
+      {error && (
+        <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <MdErrorOutline />
+          <span style={{ flex: 1 }}>{error}</span>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16 }} onClick={() => setError('')}>✕</button>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h2>System Users</h2>
@@ -94,7 +108,7 @@ export default function Users() {
                   </td>
                   <td className="muted">{u.email}</td>
                   <td><RoleBadge role={u.role} /></td>
-                  <td className="muted">{format(new Date(u.createdAt), 'dd MMM yyyy')}</td>
+                  <td className="muted">{safeDate(u.createdAt, 'dd MMM yyyy')}</td>
                   <td>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                       <button
