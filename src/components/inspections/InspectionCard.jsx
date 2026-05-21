@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
-import { MdCheckCircle, MdWarning, MdEdit, MdDelete } from 'react-icons/md';
+import { MdCheckCircle, MdWarning, MdEdit, MdDelete, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
 import { ConditionBadge } from '../ui/Badge';
 
 const safeDate = (d, fmt) => {
@@ -47,7 +47,7 @@ export default function InspectionCard({
 
           {changed && (
             <span className={`condition-change ${improved ? 'improved' : 'worsened'}`}>
-              {improved ? '↑ Improved' : '↓ Worsened'}
+              {improved ? <><MdTrendingUp size={12} /> Improved</> : <><MdTrendingDown size={12} /> Worsened</>}
             </span>
           )}
           {isLatest && (
@@ -87,18 +87,20 @@ export default function InspectionCard({
         {ins.lastVisitDate && (
           <div className="inspection-field">
             <dt>Last Visit</dt>
-            <dd>{format(new Date(ins.lastVisitDate), 'dd MMM yyyy')}</dd>
+            <dd>{safeDate(ins.lastVisitDate, 'dd MMM yyyy')}</dd>
           </div>
         )}
         <div className="inspection-field">
           <dt>Defect Status</dt>
           <dd>
             {!hasDefect ? (
-              <span style={{ color: 'var(--success)', fontSize: 13 }}>✓ Clean — no defects</span>
+              <span style={{ color: 'var(--success)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <MdCheckCircle size={14} /> Clean — no defects
+              </span>
             ) : ins.isResolved ? (
               <span className="resolve-status resolved">
                 <MdCheckCircle size={13} />
-                Resolved{ins.resolvedAt ? ` on ${format(new Date(ins.resolvedAt), 'dd MMM yyyy')}` : ''}
+                Resolved{ins.resolvedAt ? ` on ${safeDate(ins.resolvedAt, 'dd MMM yyyy')}` : ''}
                 {ins.resolvedBy ? ` by ${ins.resolvedBy}` : ''}
               </span>
             ) : (

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MdEmail, MdLock, MdErrorOutline } from 'react-icons/md';
+import { MdEmail, MdLock, MdErrorOutline, MdAccountBalance } from 'react-icons/md';
 
 export default function Login() {
   const { login } = useAuth();
@@ -31,7 +31,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon">🌉</div>
+          <div className="auth-logo-icon"><MdAccountBalance size={30} color="#fff" /></div>
           <h1>Bridge Information System</h1>
           <p>Civil Engineering Asset Management</p>
         </div>

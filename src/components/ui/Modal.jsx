@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MdClose } from 'react-icons/md';
 
 export default function Modal({ open, onClose, title, children, footer, maxWidth = 480 }) {
   useEffect(() => {
@@ -15,7 +16,7 @@ export default function Modal({ open, onClose, title, children, footer, maxWidth
       <div className="modal" style={{ maxWidth }}>
         <div className="modal-header">
           <h3>{title}</h3>
-          <button className="btn-close" onClick={onClose} aria-label="Close">✕</button>
+          <button className="btn-close" onClick={onClose} aria-label="Close"><MdClose size={20} /></button>
         </div>
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-footer">{footer}</div>}

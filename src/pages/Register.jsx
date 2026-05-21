@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MdErrorOutline, MdCheckCircle } from 'react-icons/md';
+import { MdErrorOutline, MdCheckCircle, MdAccountBalance } from 'react-icons/md';
 
 const initial = { firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'ENGINEER' };
 
@@ -44,7 +44,7 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card" style={{ maxWidth: 500 }}>
         <div className="auth-logo">
-          <div className="auth-logo-icon">🌉</div>
+          <div className="auth-logo-icon"><MdAccountBalance size={30} color="#fff" /></div>
           <h1>Bridge Information System</h1>
           <p>Civil Engineering Asset Management</p>
         </div>

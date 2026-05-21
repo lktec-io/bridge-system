@@ -10,7 +10,7 @@ const safeDate = (d, fmt) => {
 };
 import {
   MdAccountBalance, MdWarning, MdError, MdCheckCircle,
-  MdArrowForward, MdRefresh, MdAdd, MdFiberManualRecord,
+  MdArrowForward, MdRefresh, MdAdd, MdFiberManualRecord, MdReportProblem,
 } from 'react-icons/md';
 import StatsCard       from '../components/dashboard/StatsCard';
 import ConditionChart  from '../components/dashboard/ConditionChart';
@@ -77,7 +77,7 @@ export default function Dashboard() {
       {/* ── Urgency banner ─────────────────────────────── */}
       {(conditionCounts.POOR ?? 0) > 0 && (
         <div className="urgency-banner no-print">
-          <div className="urgency-banner-icon">🚨</div>
+          <div className="urgency-banner-icon"><MdReportProblem size={28} color="var(--danger)" /></div>
           <div style={{ flex: 1 }}>
             <h4>{conditionCounts.POOR} bridge(s) in POOR condition require urgent attention</h4>
             <p>{unresolvedDefects} unresolved defect record(s) across all bridges.</p>
@@ -177,8 +177,8 @@ export default function Dashboard() {
         <div className="card">
           <div className="card-header" style={{ background: '#fff5f5' }}>
             <div>
-              <div className="card-title" style={{ color: 'var(--danger)' }}>
-                ⚠ Bridges Requiring Urgent Attention
+              <div className="card-title" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <MdWarning size={18} /> Bridges Requiring Urgent Attention
               </div>
               <div className="card-subtitle">
                 Latest inspection status: POOR — immediate maintenance required

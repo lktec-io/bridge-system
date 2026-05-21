@@ -234,4 +234,6 @@
 @media (max-width: 600px) {
   .topbar-subtitle { display: none; }
   .page-content { padding: 16px 12px; }
+  .topbar { padding: 0 14px; }
+  .topbar-title { font-size: 15px; }
 }

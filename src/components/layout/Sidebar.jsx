@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   MdDashboard, MdAccountBalance, MdList, MdAddBox,
-  MdPeople, MdLogout, MdClose,
+  MdPeople, MdLogout, MdClose, MdDomain,
 } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 
@@ -35,7 +35,7 @@ export default function Sidebar({ open, onClose }) {
 
         {/* ── Logo ──────────────────────────────────────────── */}
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">🌉</div>
+          <div className="sidebar-logo-icon"><MdDomain size={20} color="#fff" /></div>
           <div className="sidebar-logo-text">
             <h1>BMS</h1>
             <span>Bridge Mgmt System</span>

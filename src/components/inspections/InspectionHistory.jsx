@@ -1,12 +1,16 @@
 import { format } from 'date-fns';
+import {
+  MdAddCircle, MdEdit, MdSearch, MdSync,
+  MdPhotoCamera, MdCheckCircle, MdNotes,
+} from 'react-icons/md';
 
-const ACTION_EMOJI = {
-  CREATE:             '🆕',
-  UPDATE:             '✏️',
-  INSPECTION_ADDED:   '🔍',
-  INSPECTION_UPDATED: '🔄',
-  PHOTO_UPLOADED:     '📷',
-  DEFECT_RESOLVED:    '✅',
+const ACTION_ICON = {
+  CREATE:             MdAddCircle,
+  UPDATE:             MdEdit,
+  INSPECTION_ADDED:   MdSearch,
+  INSPECTION_UPDATED: MdSync,
+  PHOTO_UPLOADED:     MdPhotoCamera,
+  DEFECT_RESOLVED:    MdCheckCircle,
 };
 
 const ACTION_LABEL = {
@@ -18,7 +22,7 @@ const ACTION_LABEL = {
   DEFECT_RESOLVED:    'Defect resolved',
 };
 
-const emoji = (action) => ACTION_EMOJI[action] ?? '📝';
+const getIcon = (action) => ACTION_ICON[action] ?? MdNotes;
 // Guard against null/undefined actionType — action.replace() crashes if action is falsy
 const label = (action) => ACTION_LABEL[action] ?? (action ? action.replace(/_/g, ' ') : 'System event');
 
@@ -35,25 +39,28 @@ export default function InspectionHistory({ logs = [] }) {
 
   return (
     <div className="timeline">
-      {logs.map((log) => (
-        <div key={log.id} className="timeline-item">
-          <div className="timeline-dot">{emoji(log.actionType)}</div>
-          <div className="timeline-content">
-            <strong>{label(log.actionType)}</strong>
-            {log.user && (
-              <p>By {log.user.firstName} {log.user.lastName}</p>
-            )}
-            {log.newValues && Object.keys(log.newValues).length > 0 && (
-              <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
-                Fields: {Object.keys(log.newValues).join(', ')}
-              </p>
-            )}
-            <div className="timeline-time">
-              {safeDate(log.createdAt, 'dd MMM yyyy, HH:mm')}
+      {logs.map((log) => {
+        const IconComp = getIcon(log.actionType);
+        return (
+          <div key={log.id} className="timeline-item">
+            <div className="timeline-dot"><IconComp size={16} /></div>
+            <div className="timeline-content">
+              <strong>{label(log.actionType)}</strong>
+              {log.user && (
+                <p>By {log.user.firstName} {log.user.lastName}</p>
+              )}
+              {log.newValues && Object.keys(log.newValues).length > 0 && (
+                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
+                  Fields: {Object.keys(log.newValues).join(', ')}
+                </p>
+              )}
+              <div className="timeline-time">
+                {safeDate(log.createdAt, 'dd MMM yyyy, HH:mm')}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

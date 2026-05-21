@@ -1,23 +1,26 @@
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { MdAdd } from 'react-icons/md';
+import {
+  MdAdd, MdAddCircle, MdEdit, MdSearch, MdSync,
+  MdPhotoCamera, MdCheckCircle, MdNotes,
+} from 'react-icons/md';
 
 const ACTION_META = {
-  CREATE:             { label: 'Bridge registered',  cls: 'create',  emoji: '🆕' },
-  UPDATE:             { label: 'Bridge updated',      cls: 'update',  emoji: '✏️' },
-  INSPECTION_ADDED:   { label: 'Inspection added',   cls: 'inspect', emoji: '🔍' },
-  INSPECTION_UPDATED: { label: 'Inspection updated', cls: 'update',  emoji: '🔄' },
-  PHOTO_UPLOADED:     { label: 'Photo uploaded',     cls: 'photo',   emoji: '📷' },
-  DEFECT_RESOLVED:    { label: 'Defect resolved',    cls: 'resolve', emoji: '✅' },
+  CREATE:             { label: 'Bridge registered',  cls: 'create',  Icon: MdAddCircle    },
+  UPDATE:             { label: 'Bridge updated',      cls: 'update',  Icon: MdEdit         },
+  INSPECTION_ADDED:   { label: 'Inspection added',   cls: 'inspect', Icon: MdSearch       },
+  INSPECTION_UPDATED: { label: 'Inspection updated', cls: 'update',  Icon: MdSync         },
+  PHOTO_UPLOADED:     { label: 'Photo uploaded',     cls: 'photo',   Icon: MdPhotoCamera  },
+  DEFECT_RESOLVED:    { label: 'Defect resolved',    cls: 'resolve', Icon: MdCheckCircle  },
 };
 
 // Safe fallback — action could be undefined if API returns an unexpected shape
 function getMeta(action) {
-  if (!action) return { label: 'System event', cls: 'update', emoji: '📝' };
+  if (!action) return { label: 'System event', cls: 'update', Icon: MdNotes };
   return ACTION_META[action] ?? {
     label: action.replace(/_/g, ' '),
     cls: 'update',
-    emoji: '📝',
+    Icon: MdNotes,
   };
 }
 
@@ -47,9 +50,10 @@ export default function RecentActivity({ logs = [] }) {
             {logs.map((log) => {
               // Field renamed from `action` to `actionType` in schema v2 — use actionType
               const meta = getMeta(log.actionType);
+              const { Icon } = meta;
               return (
                 <div key={log.id} className="activity-item">
-                  <div className={`activity-dot ${meta.cls}`}>{meta.emoji}</div>
+                  <div className={`activity-dot ${meta.cls}`}><Icon size={14} /></div>
                   <div className="activity-body">
                     <strong>
                       {meta.label}

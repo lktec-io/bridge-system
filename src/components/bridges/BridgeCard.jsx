@@ -3,6 +3,12 @@ import { format } from 'date-fns';
 import { MdVisibility, MdAdd, MdEdit, MdDelete, MdWarning, MdAccountBalance } from 'react-icons/md';
 import { ConditionBadge } from '../ui/Badge';
 
+const safeDate = (d, fmt) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
+};
+
 const condBand = (s) => ({ GOOD: 'good', FAIR: 'fair', POOR: 'poor' })[s] ?? 'none';
 
 export default function BridgeCard({ bridge, isAdmin, onDelete }) {
@@ -43,7 +49,7 @@ export default function BridgeCard({ bridge, isAdmin, onDelete }) {
             <dt>Last Inspected</dt>
             <dd>
               {lastIns
-                ? format(new Date(lastIns.inspectionDate), 'dd MMM yyyy')
+                ? safeDate(lastIns.inspectionDate, 'dd MMM yyyy')
                 : <span style={{ color: 'var(--warning)', fontSize: 12, fontWeight: 600 }}><MdWarning size={11} style={{ verticalAlign: 'middle' }} /> Never</span>
               }
             </dd>
@@ -51,7 +57,9 @@ export default function BridgeCard({ bridge, isAdmin, onDelete }) {
           {unresolvedCount > 0 && (
             <div className="bridge-card-stat">
               <dt>Unresolved</dt>
-              <dd style={{ color: 'var(--danger)' }}>⚠ {unresolvedCount}</dd>
+              <dd style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <MdWarning size={13} /> {unresolvedCount}
+              </dd>
             </div>
           )}
         </div>
