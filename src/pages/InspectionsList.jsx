@@ -130,7 +130,7 @@ export default function InspectionsList() {
           </div>
         </div>
       ) : (
-        <div className="table-wrapper">
+        <div className="table-wrapper inspections-table-wrapper">
           <table className="table">
             <thead>
               <tr>

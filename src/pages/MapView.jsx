@@ -148,7 +148,7 @@ export default function MapView() {
             <div className="card-title">Bridges on Map</div>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{withCoords.length} located</span>
           </div>
-          <div className="table-wrapper">
+          <div className="table-wrapper map-table-wrapper">
             <table className="table table-compact">
               <thead>
                 <tr>

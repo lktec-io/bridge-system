@@ -7,13 +7,14 @@
 
 /* ===== RESET ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; }
+html { font-size: 16px; scroll-behavior: smooth; overflow-x: hidden; }
 body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -1016,3 +1017,186 @@ tr.row-poor:hover td     { background: #fee2e2 !important; }
 @media (max-width: 600px) {
   .leaflet-container { height: 380px !important; }
 }
+
+/* ============================================================
+   COMPREHENSIVE MOBILE RESPONSIVENESS — ALL PAGES
+   ============================================================ */
+
+/* ── BridgeDetails inline-grid replacements ──────────────── */
+.bd-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.bd-grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 700px) {
+  .bd-grid-2col { grid-template-columns: 1fr; gap: 16px; }
+  .bd-grid-3col { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* ── Bridge registry table — hide less-critical cols ─────── */
+@media (max-width: 900px) {
+  /* Hide: Dimensions (5), Inspections count (6) */
+  .bridge-table-wrapper th:nth-child(5),
+  .bridge-table-wrapper td:nth-child(5),
+  .bridge-table-wrapper th:nth-child(6),
+  .bridge-table-wrapper td:nth-child(6) { display: none; }
+}
+@media (max-width: 640px) {
+  /* Also hide: Type (2), Last Inspected (7) */
+  .bridge-table-wrapper th:nth-child(2),
+  .bridge-table-wrapper td:nth-child(2),
+  .bridge-table-wrapper th:nth-child(7),
+  .bridge-table-wrapper td:nth-child(7) { display: none; }
+}
+@media (max-width: 420px) {
+  /* Also hide: Section (3) */
+  .bridge-table-wrapper th:nth-child(3),
+  .bridge-table-wrapper td:nth-child(3) { display: none; }
+}
+
+/* ── Inspections list table — hide wide cols on mobile ───── */
+@media (max-width: 760px) {
+  /* Hide: Defect Summary (7) */
+  .inspections-table-wrapper th:nth-child(7),
+  .inspections-table-wrapper td:nth-child(7) { display: none; }
+}
+@media (max-width: 560px) {
+  /* Also hide: Section (3) */
+  .inspections-table-wrapper th:nth-child(3),
+  .inspections-table-wrapper td:nth-child(3) { display: none; }
+}
+@media (max-width: 420px) {
+  /* Also hide: Inspector (4) */
+  .inspections-table-wrapper th:nth-child(4),
+  .inspections-table-wrapper td:nth-child(4) { display: none; }
+}
+
+/* ── Map bridge table — hide Coordinates on small screens ── */
+@media (max-width: 540px) {
+  .map-table-wrapper th:nth-child(5),
+  .map-table-wrapper td:nth-child(5) { display: none; }
+}
+@media (max-width: 380px) {
+  .map-table-wrapper th:nth-child(3),
+  .map-table-wrapper td:nth-child(3) { display: none; }
+}
+
+/* ── Filter bar — override fixed inline widths ────────────── */
+@media (max-width: 600px) {
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .filter-bar select.form-control,
+  .filter-bar input.form-control {
+    width: 100% !important;
+  }
+  .filter-bar .search-box {
+    width: 100%;
+  }
+}
+
+/* ── Urgency banner — wrap on narrow screens ──────────────── */
+.urgency-banner { flex-wrap: wrap; }
+@media (max-width: 560px) {
+  .urgency-banner { padding: 14px 16px; gap: 10px; }
+  .urgency-banner h4 { font-size: 14px; }
+}
+
+/* ── Dashboard latest inspections / poor bridges tables ───── */
+@media (max-width: 640px) {
+  /* Dashboard latest inspections: hide Section (2), Inspector (3) */
+  .dashboard-inspections-table th:nth-child(2),
+  .dashboard-inspections-table td:nth-child(2),
+  .dashboard-inspections-table th:nth-child(3),
+  .dashboard-inspections-table td:nth-child(3) { display: none; }
+  /* Dashboard poor bridges table: hide Inspector (4), Defect Summary (5) */
+  .dashboard-poor-table th:nth-child(4),
+  .dashboard-poor-table td:nth-child(4),
+  .dashboard-poor-table th:nth-child(5),
+  .dashboard-poor-table td:nth-child(5) { display: none; }
+}
+
+/* ── BridgeDetails profile header actions ─────────────────── */
+@media (max-width: 560px) {
+  .bridge-profile-actions { flex-direction: column; width: 100%; }
+  .bridge-profile-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* ── Bridge Details — condition summary on tiny screens ───── */
+@media (max-width: 400px) {
+  .bd-grid-3col { gap: 8px; }
+  .bd-grid-2col { gap: 12px; }
+}
+
+/* ── General card padding tightening on small mobile ──────── */
+@media (max-width: 420px) {
+  .card-header { padding: 12px 14px; }
+  .card-body   { padding: 12px 14px; }
+  .page-header h2 { font-size: 16px; }
+  .welcome-title  { font-size: 18px; }
+  .welcome-greeting-chip { font-size: 10px; }
+  .welcome-hero { padding: 16px 14px; }
+}
+
+/* ── Tab bar — shrink on tiny screens ──────────────────────── */
+@media (max-width: 420px) {
+  .tab-btn { padding: 8px 10px; font-size: 12px; gap: 4px; }
+}
+
+/* ── Stat cards — single column on 360px ───────────────────── */
+@media (max-width: 360px) {
+  .stats-grid-6 { grid-template-columns: 1fr; }
+  .stats-grid   { grid-template-columns: 1fr; }
+}
+
+/* ── Inspection card actions — full width on mobile ──────── */
+@media (max-width: 480px) {
+  .inspection-card-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .inspection-card-actions .btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+}
+
+/* ── Modal — full width on tiny screens ─────────────────────── */
+@media (max-width: 480px) {
+  .modal-overlay { padding: 12px; }
+  .modal { border-radius: var(--radius-sm); }
+  .modal-header { padding: 14px 16px; }
+  .modal-body   { padding: 16px; }
+  .modal-footer { padding: 12px 16px; gap: 8px; }
+  .modal-footer .btn { flex: 1; justify-content: center; }
+}
+
+/* ── Form action buttons — full width on mobile ─────────────── */
+@media (max-width: 480px) {
+  .form-actions-row {
+    flex-direction: column;
+  }
+  .form-actions-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Bridge detail breadcrumb — wrap long paths ──────────────── */
+.breadcrumb { flex-wrap: wrap; }
+
+/* ── Page content minimum width guard ────────────────────────── */
+.page-content { min-width: 0; overflow-x: hidden; }
+.main-content { overflow-x: hidden; }
+
+/* ── Ensure all top-level page divs don't overflow ───────────── */
+.page-content > div { max-width: 100%; }
+

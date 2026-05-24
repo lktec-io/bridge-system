@@ -5,7 +5,7 @@ import { ConditionBadge } from '../ui/Badge';
 
 export default function BridgeTable({ bridges, isAdmin, onDelete }) {
   return (
-    <div className="table-wrapper">
+    <div className="table-wrapper bridge-table-wrapper">
       <table className="table">
         <thead>
           <tr>

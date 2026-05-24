@@ -263,7 +263,7 @@ export default function InspectionForm() {
         )}
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }} className="form-actions-row">
           <Link to={`/bridges/${bridgeId}`} className="btn btn-secondary"><MdArrowBack /> Cancel</Link>
           <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
             {loading ? 'Saving...' : <><MdSave /> {isEdit ? 'Update Inspection' : 'Save Inspection'}</>}

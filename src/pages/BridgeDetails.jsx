@@ -186,7 +186,7 @@ export default function BridgeDetails() {
                 )}
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} className="no-print">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} className="no-print bridge-profile-actions">
               <button className="btn btn-ghost btn-sm" onClick={() => window.print()}><MdPrint /> Print</button>
               <Link to={`/bridges/${id}/edit`} className="btn btn-secondary btn-sm"><MdEdit /> Edit</Link>
               <Link to={`/bridges/${id}/inspections/new`} className="btn btn-primary btn-sm"><MdAdd /> Add Inspection</Link>
@@ -214,7 +214,7 @@ export default function BridgeDetails() {
       {/* ── Overview Tab ─────────────────────────────────── */}
       {tab === 'overview' && (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+          <div className="bd-grid-2col" style={{ marginBottom: 20 }}>
             <div className="card">
               <div className="card-header"><div className="card-title">Bridge Identity</div></div>
               <div className="card-body">
@@ -250,7 +250,7 @@ export default function BridgeDetails() {
             <div className="card-header"><div className="card-title">Current Condition Summary</div></div>
             <div className="card-body">
               {latestIns ? (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+                <div className="bd-grid-3col">
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 8 }}>Condition</div>
                     <ConditionBadge status={latestIns.conditionStatus} />

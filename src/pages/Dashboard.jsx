@@ -187,7 +187,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="table-compact">
-            <table className="table">
+            <table className="table dashboard-inspections-table">
               <thead>
                 <tr>
                   <th>Bridge</th>
@@ -238,7 +238,7 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="table-compact">
-            <table className="table">
+            <table className="table dashboard-poor-table">
               <thead>
                 <tr>
                   <th>Serial No.</th>

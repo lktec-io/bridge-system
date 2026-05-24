@@ -201,7 +201,7 @@ export default function BridgeForm() {
               <Field {...fp} name="width"  label="Width (m)"  type="number" step="any" placeholder="e.g. 7.2"  />
               <Field {...fp} name="height" label="Height (m)" type="number" step="any" placeholder="e.g. 3.8"  />
             </div>
-            <div className="form-row" style={{ gridTemplateColumns: '1fr 2fr' }}>
+            <div className="form-row">
               <Field {...fp} name="numberOfSpans" label="Number of Spans" type="number" min="1" placeholder="e.g. 3" />
               <div />
             </div>
@@ -228,7 +228,7 @@ export default function BridgeForm() {
         </div>
 
         {/* ── Actions ─────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }} className="form-actions-row">
           <Link to={isEdit ? `/bridges/${id}` : '/bridges'} className="btn btn-secondary">
             <MdArrowBack /> Cancel
           </Link>
