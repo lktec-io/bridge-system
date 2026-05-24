@@ -1,24 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 import { MdDomain } from 'react-icons/md';
-
-function LiveDate() {
-  const [now, setNow] = useState(new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60000);
-    return () => clearInterval(t);
-  }, []);
-  const day  = now.toLocaleDateString('en-US', { weekday: 'long' });
-  const date = now.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-  return (
-    <div className="auth-date-block">
-      <span className="auth-date-day">{day}</span>
-      <span className="auth-date-full">{date}</span>
-    </div>
-  );
-}
 
 export default function Login() {
   const { login } = useAuth();
@@ -73,9 +57,6 @@ export default function Login() {
         </div>
 
         <div className="auth-hr" />
-
-        {/* Live date */}
-        <LiveDate />
 
         {error && (
           <div className="alert alert-error" style={{ marginBottom: 20 }}>

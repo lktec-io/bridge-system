@@ -84,56 +84,98 @@ export default function Users() {
           </div>
         </div>
       ) : (
-        <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Registered</th>
-                <th style={{ textAlign: 'center' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>
-                    {u.firstName} {u.lastName}
-                    {u.id === currentUser?.id && (
-                      <span style={{ fontSize: 11, marginLeft: 6, background: 'var(--primary-light)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 99, fontWeight: 700 }}>
-                        You
-                      </span>
-                    )}
-                  </td>
-                  <td className="muted">{u.email}</td>
-                  <td><RoleBadge role={u.role} /></td>
-                  <td className="muted">{safeDate(u.createdAt, 'dd MMM yyyy')}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
-                      <button
-                        className="btn btn-ghost btn-sm btn-icon"
-                        title="Change Role"
-                        onClick={() => openEdit(u)}
-                      >
-                        <MdEdit />
-                      </button>
-                      {u.id !== currentUser?.id && (
+        <>
+          {/* Desktop table */}
+          <div className="table-wrapper users-desktop-table">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Registered</th>
+                  <th style={{ textAlign: 'center' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 600 }}>
+                      {u.firstName} {u.lastName}
+                      {u.id === currentUser?.id && (
+                        <span style={{ fontSize: 11, marginLeft: 6, background: 'var(--primary-light)', color: 'var(--primary)', padding: '1px 6px', borderRadius: 99, fontWeight: 700 }}>
+                          You
+                        </span>
+                      )}
+                    </td>
+                    <td className="muted">{u.email}</td>
+                    <td><RoleBadge role={u.role} /></td>
+                    <td className="muted">{safeDate(u.createdAt, 'dd MMM yyyy')}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                         <button
-                          className="btn btn-danger btn-sm btn-icon"
-                          title="Delete User"
-                          onClick={() => setDeleteTarget({ id: u.id, name: `${u.firstName} ${u.lastName}` })}
+                          className="btn btn-ghost btn-sm btn-icon"
+                          title="Change Role"
+                          onClick={() => openEdit(u)}
                         >
-                          <MdDelete />
+                          <MdEdit />
                         </button>
+                        {u.id !== currentUser?.id && (
+                          <button
+                            className="btn btn-danger btn-sm btn-icon"
+                            title="Delete User"
+                            onClick={() => setDeleteTarget({ id: u.id, name: `${u.firstName} ${u.lastName}` })}
+                          >
+                            <MdDelete />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="users-mobile-cards">
+            {users.map((u) => (
+              <div key={u.id} className="user-card">
+                <div className="user-card-top">
+                  <div className="user-card-avatar">
+                    {u.firstName?.[0]}{u.lastName?.[0]}
+                  </div>
+                  <div className="user-card-info">
+                    <div className="user-card-name">
+                      {u.firstName} {u.lastName}
+                      {u.id === currentUser?.id && (
+                        <span className="you-chip">You</span>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <div className="user-card-email">{u.email}</div>
+                  </div>
+                </div>
+                <div className="user-card-meta">
+                  <RoleBadge role={u.role} />
+                  <span className="user-card-date">Joined {safeDate(u.createdAt, 'dd MMM yyyy')}</span>
+                </div>
+                <div className="user-card-actions">
+                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(u)}>
+                    <MdEdit /> Change Role
+                  </button>
+                  {u.id !== currentUser?.id && (
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => setDeleteTarget({ id: u.id, name: `${u.firstName} ${u.lastName}` })}
+                    >
+                      <MdDelete /> Delete
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* ── Change Role Modal ─────────────────────────────── */}

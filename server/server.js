@@ -2,6 +2,7 @@ import 'dotenv/config';
 import app    from './app.js';
 import { testConnection }        from './config/database.js';
 import { startInspectionReminder } from './cron/inspectionReminderJob.js';
+import { createTables as createNotifTables } from './services/notificationService.js';
 import logger from './utils/logger.js';
 
 const PORT     = process.env.PORT     || 8005;
@@ -12,6 +13,8 @@ async function start() {
   try {
     await testConnection();
     logger.success('MySQL connected');
+    await createNotifTables();
+    logger.success('Notification tables ready');
   } catch (err) {
     logger.error('MySQL connection FAILED — check DB_* variables in .env', err);
     process.exit(1);

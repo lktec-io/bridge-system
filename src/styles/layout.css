@@ -302,3 +302,93 @@
   .topbar-title { font-size: 15px; }
   .navbar-divider { display: none; }
 }
+
+/* ── Users page — mobile cards ─────────────────────────────── */
+.users-mobile-cards { display: none; }
+
+@media (max-width: 640px) {
+  .users-desktop-table { display: none; }
+
+  .users-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .users-mobile-cards .user-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .user-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .user-card-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+
+  .user-card-info { flex: 1; min-width: 0; }
+
+  .user-card-name {
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .user-card-email {
+    font-size: 13px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .user-card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .user-card-date {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .user-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .you-chip {
+    font-size: 11px;
+    background: var(--primary-light);
+    color: var(--primary);
+    padding: 1px 6px;
+    border-radius: 99px;
+    font-weight: 700;
+  }
+}

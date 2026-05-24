@@ -41,9 +41,8 @@ export const uploadPhoto = asyncHandler(async (req, res) => {
     photoUrl = req.file.path;
     publicId = req.file.filename;
   } else {
-    const base = process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`;
-    photoUrl   = `${base}/uploads/${req.file.filename}`;
-    publicId   = null;
+    photoUrl = `/uploads/${req.file.filename}`;
+    publicId = null;
   }
 
   const [result] = await pool.query(

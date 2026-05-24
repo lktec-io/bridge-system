@@ -1,6 +1,7 @@
 import asyncHandler from '../utils/asyncHandler.js';
 import pool         from '../config/database.js';
 import * as bridgeService from '../services/bridgeService.js';
+import { createNotification } from '../services/notificationService.js';
 
 const toISO = (v) => v ? (v instanceof Date ? v.toISOString() : new Date(v).toISOString()) : null;
 
@@ -18,6 +19,13 @@ export const getBridgeById = asyncHandler(async (req, res) => {
 export const createBridge = asyncHandler(async (req, res) => {
   const data   = sanitize(req.body);
   const bridge = await bridgeService.createBridge(data, req.user?.id);
+  createNotification(
+    'BRIDGE_CREATED',
+    'New bridge registered',
+    `${bridge.serialNumber} has been added to the registry`,
+    'bridge',
+    bridge.id
+  ).catch(() => {});
   res.status(201).json(bridge);
 });
 

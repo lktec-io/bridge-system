@@ -9,12 +9,13 @@ import { fileURLToPath } from 'url';
 import { sanitizeBody }       from './middleware/validate.js';
 import { globalErrorHandler } from './middleware/errorHandler.js';
 
-import authRoutes       from './routes/authRoutes.js';
-import userRoutes       from './routes/userRoutes.js';
-import bridgeRoutes     from './routes/bridgeRoutes.js';
-import inspectionRoutes from './routes/inspectionRoutes.js';
-import photoRoutes      from './routes/photoRoutes.js';
-import dashboardRoutes  from './routes/dashboardRoutes.js';
+import authRoutes         from './routes/authRoutes.js';
+import userRoutes         from './routes/userRoutes.js';
+import bridgeRoutes       from './routes/bridgeRoutes.js';
+import inspectionRoutes   from './routes/inspectionRoutes.js';
+import photoRoutes        from './routes/photoRoutes.js';
+import dashboardRoutes    from './routes/dashboardRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -80,7 +81,8 @@ app.use('/api/users',       apiLimiter,  userRoutes);
 app.use('/api/bridges',     apiLimiter,  bridgeRoutes);
 app.use('/api/inspections', apiLimiter,  inspectionRoutes);
 app.use('/api/photos',      apiLimiter,  photoRoutes);
-app.use('/api/dashboard',   apiLimiter,  dashboardRoutes);
+app.use('/api/dashboard',      apiLimiter,  dashboardRoutes);
+app.use('/api/notifications',  apiLimiter,  notificationRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({

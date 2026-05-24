@@ -19,11 +19,12 @@ const safeDate = (d, fmt) => {
   return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
 };
 
-function getGreeting() {
+function getGreeting(role) {
   const h = new Date().getHours();
-  if (h < 12) return 'Good Morning';
-  if (h < 17) return 'Good Afternoon';
-  return 'Good Evening';
+  const part = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+  const labels = { ADMIN: 'Administrator', ENGINEER: 'Engineer', INSPECTOR: 'Inspector' };
+  const label = labels[role] ?? 'User';
+  return `${part}, ${label}`;
 }
 
 function getLiveDateStr() {
@@ -105,7 +106,7 @@ export default function Dashboard() {
         <div className="welcome-glow wg2" aria-hidden="true" />
         <div className="welcome-hero-body">
           <div className="welcome-eyebrow">
-            <span className="welcome-greeting-chip">{getGreeting()}</span>
+            <span className="welcome-greeting-chip">{getGreeting(user?.role)}</span>
             <span className="welcome-date-chip">{getLiveDateStr()}</span>
           </div>
           <h2 className="welcome-title">

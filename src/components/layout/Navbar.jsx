@@ -155,7 +155,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
                       <div className="notif-item-body">
                         <div className="notif-item-title">{n.title}</div>
                         <div className="notif-item-msg">{n.message}</div>
-                        <div className="notif-item-time">{timeAgo(n.ts)}</div>
+                        <div className="notif-item-time">{timeAgo(n.createdAt)}</div>
                       </div>
                       {!isRead(n.id) && <span className="notif-unread-dot" />}
                     </div>
