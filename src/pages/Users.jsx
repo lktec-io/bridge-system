@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { authAPI } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { MdPeople, MdEdit, MdCheckCircle, MdDelete, MdErrorOutline } from 'react-icons/md';
+import { MdPeople, MdEdit, MdCheckCircle, MdDelete, MdErrorOutline, MdClose } from 'react-icons/md';
 import { RoleBadge } from '../components/ui/Badge';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -66,7 +66,7 @@ export default function Users() {
         <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <MdErrorOutline />
           <span style={{ flex: 1 }}>{error}</span>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16 }} onClick={() => setError('')}>✕</button>
+          <button className="btn-close" onClick={() => setError('')}><MdClose size={18} /></button>
         </div>
       )}
       <div className="page-header">

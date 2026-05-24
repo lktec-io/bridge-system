@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { bridgesAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
-import { MdAdd, MdAccountBalance, MdRefresh, MdErrorOutline } from 'react-icons/md';
+import { MdAdd, MdAccountBalance, MdRefresh, MdErrorOutline, MdClose } from 'react-icons/md';
 import BridgeSearch from '../components/bridges/BridgeSearch';
 import BridgeTable  from '../components/bridges/BridgeTable';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
@@ -75,7 +75,7 @@ export default function BridgesList() {
         <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <MdErrorOutline />
           <span style={{ flex: 1 }}>{deleteError}</span>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16 }} onClick={() => setDeleteError('')}>✕</button>
+          <button className="btn-close" onClick={() => setDeleteError('')}><MdClose size={18} /></button>
         </div>
       )}
       <div className="page-header">

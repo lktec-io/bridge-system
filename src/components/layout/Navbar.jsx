@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
-import { MdMenu } from 'react-icons/md';
+import { FiMenu, FiX, FiBell, FiLogOut, FiSun, FiMoon } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const ROUTE_META = {
   '/dashboard':    { title: 'Dashboard',        subtitle: 'System overview and key statistics' },
@@ -23,12 +24,13 @@ function resolvePageMeta(pathname) {
   if (/\/bridges\/\d+$/.test(pathname))
     return { title: 'Bridge Profile',   subtitle: 'Full bridge record and inspection history' };
 
-  return { title: 'Bridge Management System', subtitle: '' };
+  return { title: 'Baraka Microcredit', subtitle: '' };
 }
 
-export default function Navbar({ onMenuClick }) {
+export default function Navbar({ onMenuClick, sidebarOpen }) {
   const { pathname } = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const { title, subtitle } = resolvePageMeta(pathname);
 
   const initials = user
@@ -43,10 +45,10 @@ export default function Navbar({ onMenuClick }) {
   return (
     <header className="topbar">
 
-      {/* ── Left: hamburger + page title ──────────────────── */}
+      {/* Left: hamburger + page title */}
       <div className="topbar-left">
         <button className="hamburger" onClick={onMenuClick} aria-label="Toggle sidebar">
-          <MdMenu size={22} />
+          {sidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
         </button>
         <div>
           <div className="topbar-title">{title}</div>
@@ -54,8 +56,28 @@ export default function Navbar({ onMenuClick }) {
         </div>
       </div>
 
-      {/* ── Right: user info ──────────────────────────────── */}
+      {/* Right: controls */}
       <div className="topbar-right">
+
+        {/* Theme toggle */}
+        <button
+          className="navbar-icon-btn"
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <FiSun size={17} /> : <FiMoon size={17} />}
+        </button>
+
+        {/* Notifications */}
+        <button className="navbar-icon-btn navbar-bell" title="Notifications" aria-label="Notifications">
+          <FiBell size={17} />
+          <span className="bell-dot" />
+        </button>
+
+        <div className="navbar-divider" />
+
+        {/* User info */}
         <div className="navbar-user">
           <div className="navbar-user-info">
             <span className="navbar-user-name">
@@ -65,12 +87,20 @@ export default function Navbar({ onMenuClick }) {
               {user?.role}
             </span>
           </div>
-          <div className="navbar-user-avatar" title={`${user?.firstName} ${user?.lastName}`}>
-            {initials}
-          </div>
+          <div className="navbar-user-avatar">{initials}</div>
         </div>
-      </div>
 
+        {/* Logout */}
+        <button
+          className="navbar-icon-btn navbar-logout"
+          onClick={logout}
+          title="Sign out"
+          aria-label="Sign out"
+        >
+          <FiLogOut size={17} />
+        </button>
+
+      </div>
     </header>
   );
 }

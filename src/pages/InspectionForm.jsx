@@ -204,9 +204,9 @@ export default function InspectionForm() {
                   value={form.conditionStatus} onChange={handleChange}
                 >
                   <option value="">Select the overall bridge condition...</option>
-                  <option value="GOOD">✅ Good — no significant issues found</option>
-                  <option value="FAIR">⚠️ Fair — minor defects, requires monitoring</option>
-                  <option value="POOR">🔴 Poor — major defects, urgent action required</option>
+                  <option value="GOOD">Good — no significant issues found</option>
+                  <option value="FAIR">Fair — minor defects, requires monitoring</option>
+                  <option value="POOR">Poor — major defects, urgent action required</option>
                 </select>
                 {errors.conditionStatus && <span className="form-error"><MdErrorOutline size={13} />{errors.conditionStatus}</span>}
               </div>

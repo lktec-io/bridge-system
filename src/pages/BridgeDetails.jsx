@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import {
   MdEdit, MdDelete, MdAdd, MdPhoto, MdHistory,
   MdFindInPage, MdMap, MdInfo, MdCloudUpload,
-  MdErrorOutline, MdPrint, MdCheckCircle, MdWarning,
+  MdErrorOutline, MdPrint, MdCheckCircle, MdWarning, MdClose,
 } from 'react-icons/md';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -148,7 +148,7 @@ export default function BridgeDetails() {
         <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
           <MdErrorOutline />
           <span style={{ flex: 1 }}>{actionError}</span>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '0 4px', fontSize: 16, lineHeight: 1 }} onClick={() => setActionError('')}>✕</button>
+          <button className="btn-close" onClick={() => setActionError('')}><MdClose size={18} /></button>
         </div>
       )}
 
@@ -363,7 +363,7 @@ export default function BridgeDetails() {
                   <>
                     <img src={photoUrl(photo)} alt={label} />
                     <span className="photo-label">{label}</span>
-                    <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo">✕</button>
+                    <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo"><MdClose size={13} /></button>
                   </>
                 ) : (
                   <div className="photo-placeholder" onClick={() => setUploadType(type)}>

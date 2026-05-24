@@ -54,4 +54,41 @@
 
   /* Motion */
   --transition: 160ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* ── DARK MODE ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  --primary:       #4f8ef7;
+  --primary-dark:  #3b7de8;
+  --primary-light: rgba(79,142,247,.16);
+
+  --success-light: rgba(22,163,74,.18);
+  --warning-light: rgba(217,119,6,.18);
+  --danger-light:  rgba(220,38,38,.18);
+  --info-light:    rgba(8,145,178,.18);
+
+  --secondary:     #94a3b8;
+  --bg:            #090e1a;
+  --bg-card:       #111827;
+  --border:        #1e2d42;
+  --border-focus:  #4f8ef7;
+  --text:          #eef2ff;
+  --text-muted:    #7b92b4;
+  --text-light:    #3d526e;
+
+  --shadow:    0 1px 3px rgba(0,0,0,.4),  0 1px 2px rgba(0,0,0,.3);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.4);
+}
+
+/* ── THEME TRANSITION (applied briefly during switch) ── */
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color 0.25s ease,
+    border-color     0.25s ease,
+    color            0.15s ease,
+    box-shadow       0.25s ease !important;
 }

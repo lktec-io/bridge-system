@@ -24,9 +24,9 @@ export default function BridgeSearch({ search, condition, dateFilter, sortBy, on
             onChange={(e) => onChange('condition', e.target.value)}
           >
             <option value="">All Conditions</option>
-            <option value="GOOD">✅ Good</option>
-            <option value="FAIR">⚠️ Fair</option>
-            <option value="POOR">🔴 Poor</option>
+            <option value="GOOD">Good</option>
+            <option value="FAIR">Fair</option>
+            <option value="POOR">Poor</option>
           </select>
 
           <select

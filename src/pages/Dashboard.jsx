@@ -2,22 +2,31 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { bridgesAPI } from '../api/bridges';
 import { format } from 'date-fns';
+import {
+  FiLayers, FiActivity, FiCheckCircle, FiAlertCircle,
+  FiAlertTriangle, FiAlertOctagon, FiArrowRight, FiRefreshCw, FiPlus,
+} from 'react-icons/fi';
+import { MdWarning, MdReportProblem } from 'react-icons/md';
+import { useAuth } from '../context/AuthContext';
+import StatsCard       from '../components/dashboard/StatsCard';
+import ConditionChart  from '../components/dashboard/ConditionChart';
+import RecentActivity  from '../components/dashboard/RecentActivity';
+import { ConditionBadge } from '../components/ui/Badge';
 
 const safeDate = (d, fmt) => {
   if (!d) return '—';
   const dt = new Date(d);
   return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
 };
-import {
-  MdAccountBalance, MdWarning, MdError, MdCheckCircle,
-  MdArrowForward, MdRefresh, MdAdd, MdFiberManualRecord, MdReportProblem,
-} from 'react-icons/md';
-import StatsCard       from '../components/dashboard/StatsCard';
-import ConditionChart  from '../components/dashboard/ConditionChart';
-import RecentActivity  from '../components/dashboard/RecentActivity';
-import { ConditionBadge } from '../components/ui/Badge';
 
-// ── Trend bar chart ───────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+// ── Trend bar chart ───────────────────────────────────────────
 function TrendChart({ data }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   return (
@@ -39,8 +48,9 @@ function TrendChart({ data }) {
   );
 }
 
-// ── Dashboard ─────────────────────────────────────────────
+// ── Dashboard ─────────────────────────────────────────────────
 export default function Dashboard() {
+  const { user } = useAuth();
   const [stats,   setStats]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
@@ -56,13 +66,21 @@ export default function Dashboard() {
 
   useEffect(() => { fetchStats(); }, []);
 
-  if (loading) return <div className="loading-center"><div className="spinner" /><span>Loading dashboard...</span></div>;
-  if (error)   return (
+  if (loading) return (
+    <div className="loading-center">
+      <div className="spinner" />
+      <span>Loading dashboard…</span>
+    </div>
+  );
+
+  if (error) return (
     <div className="empty-state">
-      <MdError />
+      <FiAlertOctagon style={{ fontSize: 48, opacity: .4 }} />
       <h3>Dashboard unavailable</h3>
       <p>{error}</p>
-      <button className="btn btn-primary btn-sm" onClick={fetchStats}><MdRefresh /> Retry</button>
+      <button className="btn btn-primary btn-sm" onClick={fetchStats}>
+        <FiRefreshCw size={14} /> Retry
+      </button>
     </div>
   );
 
@@ -74,34 +92,47 @@ export default function Dashboard() {
   return (
     <div>
 
-      {/* ── Urgency banner ─────────────────────────────── */}
+      {/* ── Welcome section ─────────────────────────────── */}
+      <div className="welcome-section">
+        <div>
+          <div className="welcome-greeting">{getGreeting()}</div>
+          <h2 className="welcome-title">{user?.firstName} {user?.lastName}</h2>
+          <p className="welcome-subtitle">Here is the latest overview of the bridge network.</p>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={fetchStats} style={{ flexShrink: 0 }}>
+          <FiRefreshCw size={13} /> Refresh
+        </button>
+      </div>
+
+      {/* ── Urgency banner ──────────────────────────────── */}
       {(conditionCounts.POOR ?? 0) > 0 && (
         <div className="urgency-banner no-print">
-          <div className="urgency-banner-icon"><MdReportProblem size={28} color="var(--danger)" /></div>
+          <div className="urgency-banner-icon">
+            <MdReportProblem size={26} color="var(--danger)" />
+          </div>
           <div style={{ flex: 1 }}>
             <h4>{conditionCounts.POOR} bridge(s) in POOR condition require urgent attention</h4>
             <p>{unresolvedDefects} unresolved defect record(s) across all bridges.</p>
           </div>
-          <Link to="/bridges?condition=POOR" className="btn btn-danger btn-sm" style={{ flexShrink: 0 }}>
-            View Now <MdArrowForward />
+          <Link to="/bridges?condition=POOR" className="btn btn-danger btn-sm no-print" style={{ flexShrink: 0 }}>
+            View Now <FiArrowRight size={13} />
           </Link>
         </div>
       )}
 
-      {/* ── 6 stat cards ───────────────────────────────── */}
+      {/* ── 6 stat cards ────────────────────────────────── */}
       <div className="stats-grid-6">
-        <StatsCard icon={MdAccountBalance}    value={totalBridges}              label="Total Bridges"       color="blue"   />
-        <StatsCard icon={MdCheckCircle}       value={recentlyInspected}         label="Inspected (30 days)" color="teal"   />
-        <StatsCard icon={MdFiberManualRecord} value={conditionCounts.GOOD ?? 0} label="Good Condition"      color="green"  />
-        <StatsCard icon={MdWarning}           value={conditionCounts.FAIR ?? 0} label="Fair Condition"      color="amber"  />
-        <StatsCard icon={MdError}             value={conditionCounts.POOR ?? 0} label="Poor Condition"      color="red"    />
-        <StatsCard icon={MdWarning}           value={unresolvedDefects}         label="Unresolved Defects"  color="orange" />
+        <StatsCard icon={FiLayers}       value={totalBridges}              label="Total Bridges"       color="blue"   />
+        <StatsCard icon={FiActivity}     value={recentlyInspected}         label="Inspected (30 days)" color="teal"   />
+        <StatsCard icon={FiCheckCircle}  value={conditionCounts.GOOD ?? 0} label="Good Condition"      color="green"  />
+        <StatsCard icon={FiAlertCircle}  value={conditionCounts.FAIR ?? 0} label="Fair Condition"      color="amber"  />
+        <StatsCard icon={FiAlertTriangle}value={conditionCounts.POOR ?? 0} label="Poor Condition"      color="red"    />
+        <StatsCard icon={FiAlertOctagon} value={unresolvedDefects}         label="Unresolved Defects"  color="orange" />
       </div>
 
-      {/* ── Middle row: left panel + activity ──────────── */}
+      {/* ── Middle row ──────────────────────────────────── */}
       <div className="dashboard-panels">
 
-        {/* Left: condition breakdown + trend */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <ConditionChart counts={conditionCounts} total={totalBridges} />
 
@@ -116,7 +147,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right: activity feed */}
         <RecentActivity logs={recentActivity} />
       </div>
 
@@ -128,13 +158,15 @@ export default function Dashboard() {
             <div className="card-subtitle">Most recently recorded inspection activities</div>
           </div>
           <Link to="/inspections" className="btn btn-ghost btn-sm no-print">
-            All Inspections <MdArrowForward />
+            All Inspections <FiArrowRight size={13} />
           </Link>
         </div>
         {recentInspections.length === 0 ? (
           <div className="empty-state" style={{ padding: '40px 24px' }}>
             <p>No inspections recorded yet.</p>
-            <Link to="/bridges" className="btn btn-primary btn-sm"><MdAdd /> Start Inspecting</Link>
+            <Link to="/bridges" className="btn btn-primary btn-sm">
+              <FiPlus size={14} /> Start Inspecting
+            </Link>
           </div>
         ) : (
           <div className="table-compact">
@@ -172,10 +204,10 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ── Poor bridges urgent table ───────────────────── */}
+      {/* ── Poor bridges ────────────────────────────────── */}
       {poorBridges.length > 0 && (
         <div className="card">
-          <div className="card-header" style={{ background: '#fff5f5' }}>
+          <div className="card-header" style={{ background: 'var(--danger-light)' }}>
             <div>
               <div className="card-title" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <MdWarning size={18} /> Bridges Requiring Urgent Attention
@@ -185,7 +217,7 @@ export default function Dashboard() {
               </div>
             </div>
             <Link to="/bridges?condition=POOR" className="btn btn-danger btn-sm no-print">
-              View All <MdArrowForward />
+              View All <FiArrowRight size={13} />
             </Link>
           </div>
           <div className="table-compact">
@@ -225,7 +257,7 @@ export default function Dashboard() {
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <Link to={`/bridges/${b.id}/inspections/new`} className="btn btn-primary btn-sm no-print">
-                          + Inspect
+                          <FiPlus size={13} /> Inspect
                         </Link>
                       </td>
                     </tr>

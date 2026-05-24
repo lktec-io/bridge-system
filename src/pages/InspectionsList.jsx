@@ -6,6 +6,7 @@ import {
   MdFindInPage, MdRefresh, MdSearch,
   MdCheckCircle, MdWarning,
 } from 'react-icons/md';
+import { FiCheckCircle } from 'react-icons/fi';
 import { ConditionBadge } from '../components/ui/Badge';
 
 const EMPTY_FILTERS = { search: '', condition: '', resolved: '' };
@@ -87,9 +88,9 @@ export default function InspectionsList() {
               onChange={(e) => handleFilter('condition', e.target.value)}
             >
               <option value="">All Conditions</option>
-              <option value="GOOD">✅ Good</option>
-              <option value="FAIR">⚠️ Fair</option>
-              <option value="POOR">🔴 Poor</option>
+              <option value="GOOD">Good</option>
+              <option value="FAIR">Fair</option>
+              <option value="POOR">Poor</option>
             </select>
 
             <select
@@ -158,7 +159,7 @@ export default function InspectionsList() {
                   <td><ConditionBadge status={ins.conditionStatus} /></td>
                   <td>
                     {!ins.defectDescription ? (
-                      <span style={{ fontSize: 12, color: 'var(--success)' }}>✓ None</span>
+                      <span style={{ fontSize: 12, color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><FiCheckCircle size={12} /> None</span>
                     ) : ins.isResolved ? (
                       <span className="resolve-status resolved" style={{ fontSize: 11 }}>
                         <MdCheckCircle size={12} /> Resolved

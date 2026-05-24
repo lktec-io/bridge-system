@@ -1,23 +1,20 @@
 import { NavLink } from 'react-router-dom';
-import {
-  MdDashboard, MdAccountBalance, MdList, MdAddBox,
-  MdPeople, MdLogout, MdClose, MdDomain,
-} from 'react-icons/md';
+import { FiGrid, FiDatabase, FiFileText, FiUsers, FiX } from 'react-icons/fi';
+import { MdDomain } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 
 const NAV_MAIN = [
-  { to: '/dashboard', icon: MdDashboard,      label: 'Dashboard'   },
-  { to: '/bridges',   icon: MdAccountBalance, label: 'Bridges'     },
-  { to: '/bridges/new', icon: MdAddBox,       label: 'Add Bridge'  },
-  { to: '/inspections', icon: MdList,         label: 'Inspections' },
+  { to: '/dashboard',   icon: FiGrid,     label: 'Dashboard',   end: true  },
+  { to: '/bridges',     icon: FiDatabase, label: 'Bridges',     end: false },
+  { to: '/inspections', icon: FiFileText, label: 'Inspections', end: true  },
 ];
 
 const NAV_ADMIN = [
-  { to: '/users', icon: MdPeople, label: 'Users' },
+  { to: '/users', icon: FiUsers, label: 'Users', end: true },
 ];
 
 export default function Sidebar({ open, onClose }) {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -33,47 +30,54 @@ export default function Sidebar({ open, onClose }) {
 
       <aside className={`sidebar${open ? ' open' : ''}`} aria-label="Main navigation">
 
-        {/* ── Logo ──────────────────────────────────────────── */}
+        {/* Logo */}
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon"><MdDomain size={20} color="#fff" /></div>
+          <div className="sidebar-logo-icon">
+            <MdDomain size={19} color="#fff" />
+          </div>
           <div className="sidebar-logo-text">
-            <h1>BMS</h1>
-            <span>Bridge Mgmt System</span>
+            <h1>BARAKA</h1>
+            <span>Microcredit Platform</span>
           </div>
           <button className="sidebar-close-btn" onClick={onClose} aria-label="Close sidebar">
-            <MdClose size={18} />
+            <FiX size={17} />
           </button>
         </div>
 
-        {/* ── Navigation ────────────────────────────────────── */}
+        {/* Navigation */}
         <nav className="sidebar-nav">
+
           <span className="nav-section-title">Main</span>
 
-          {NAV_MAIN.map(({ to, icon: Icon, label }) => (
+          {NAV_MAIN.map(({ to, icon: Icon, label, end }, i) => (
             <NavLink
               key={to}
               to={to}
+              end={end}
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
               onClick={onClose}
+              style={{ '--nav-i': i }}
             >
-              <Icon size={18} />
+              <Icon size={16} />
               <span>{label}</span>
             </NavLink>
           ))}
 
           {isAdmin && (
             <>
-              <span className="nav-section-title" style={{ marginTop: 16 }}>
+              <span className="nav-section-title" style={{ marginTop: 20 }}>
                 Administration
               </span>
-              {NAV_ADMIN.map(({ to, icon: Icon, label }) => (
+              {NAV_ADMIN.map(({ to, icon: Icon, label, end }, i) => (
                 <NavLink
                   key={to}
                   to={to}
+                  end={end}
                   className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                   onClick={onClose}
+                  style={{ '--nav-i': NAV_MAIN.length + i + 1 }}
                 >
-                  <Icon size={18} />
+                  <Icon size={16} />
                   <span>{label}</span>
                 </NavLink>
               ))}
@@ -81,7 +85,7 @@ export default function Sidebar({ open, onClose }) {
           )}
         </nav>
 
-        {/* ── User card ─────────────────────────────────────── */}
+        {/* User card */}
         <div className="sidebar-footer">
           <div className="user-card">
             <div className="user-avatar">{initials}</div>
@@ -89,9 +93,6 @@ export default function Sidebar({ open, onClose }) {
               <strong>{user?.firstName} {user?.lastName}</strong>
               <span>{user?.role?.toLowerCase()}</span>
             </div>
-            <button className="btn-logout" onClick={logout} title="Sign out" aria-label="Sign out">
-              <MdLogout size={18} />
-            </button>
           </div>
         </div>
 
