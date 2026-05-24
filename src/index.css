@@ -645,3 +645,92 @@ tr.row-poor:hover td     { background: #fee2e2 !important; }
   .card-header { padding: 14px 16px; gap: 8px; }
   .card-body { padding: 16px; }
 }
+
+/* ===== PAGE TOP PROGRESS BAR ===== */
+.page-top-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 3px; z-index: 9999;
+  background: transparent;
+  pointer-events: none;
+}
+.page-top-bar.active {
+  background: linear-gradient(90deg, #1a56db, #7c3aed, #0891b2);
+  animation: topBarProgress 0.55s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes topBarProgress {
+  0%   { transform: scaleX(0);    transform-origin: left; opacity: 1; }
+  80%  { transform: scaleX(0.92); transform-origin: left; opacity: 1; }
+  100% { transform: scaleX(1);    transform-origin: left; opacity: 0; }
+}
+
+/* ===== SKELETON LOADERS ===== */
+.skel {
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skel-text  { height: 14px; width: 100%; margin-bottom: 8px; }
+.skel-title { height: 22px; width: 60%; margin-bottom: 12px; }
+.skel-card  { height: 90px; width: 100%; border-radius: var(--radius); }
+.skel-circle{ border-radius: 50%; }
+
+/* ===== STAT CARD STAGGER ANIMATION ===== */
+@keyframes statIn {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+.stats-grid .stat-card,
+.stats-grid-6 .stat-card {
+  animation: statIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stats-grid .stat-card:nth-child(1),
+.stats-grid-6 .stat-card:nth-child(1) { animation-delay: 0ms; }
+.stats-grid .stat-card:nth-child(2),
+.stats-grid-6 .stat-card:nth-child(2) { animation-delay: 60ms; }
+.stats-grid .stat-card:nth-child(3),
+.stats-grid-6 .stat-card:nth-child(3) { animation-delay: 120ms; }
+.stats-grid .stat-card:nth-child(4),
+.stats-grid-6 .stat-card:nth-child(4) { animation-delay: 180ms; }
+.stats-grid-6 .stat-card:nth-child(5) { animation-delay: 240ms; }
+.stats-grid-6 .stat-card:nth-child(6) { animation-delay: 300ms; }
+
+/* Stat trend row */
+.stat-trend {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 600; margin-top: 5px;
+}
+
+/* ===== AUTH CARD DARK ALERT OVERRIDES ===== */
+.auth-card .alert-error {
+  background: rgba(220,38,38,.18); color: #fca5a5;
+  border-left-color: #ef4444;
+}
+.auth-card .alert-success {
+  background: rgba(22,163,74,.18); color: #86efac;
+  border-left-color: #22c55e;
+}
+.auth-card .alert-info {
+  background: rgba(8,145,178,.18); color: #7dd3fc;
+  border-left-color: #0ea5e9;
+}
+.auth-card-info {
+  background: rgba(79,142,247,.12); color: rgba(147,197,253,.9);
+  border-left: 4px solid rgba(79,142,247,.5);
+  font-size: 13px; margin-bottom: 0;
+}
+
+/* ===== AUTH FOOTER DARK OVERRIDE ===== */
+.auth-footer {
+  margin-top: 24px; text-align: center;
+  font-size: 13.5px; color: rgba(255,255,255,.4);
+}
+.auth-footer a {
+  color: rgba(147,197,253,.85); font-weight: 600;
+  transition: color var(--transition);
+}
+.auth-footer a:hover { color: #93c5fd; text-decoration: underline; }

@@ -51,8 +51,8 @@ export default function Login() {
             <MdDomain size={26} color="#fff" />
           </div>
           <div className="auth-logo-text">
-            <h1>BARAKA MICROCREDIT</h1>
-            <p>Loan &amp; Asset Management Platform</p>
+            <h1>BMS</h1>
+            <p>Bridge Information System</p>
           </div>
         </div>
 

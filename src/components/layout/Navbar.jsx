@@ -24,7 +24,7 @@ function resolvePageMeta(pathname) {
   if (/\/bridges\/\d+$/.test(pathname))
     return { title: 'Bridge Profile',   subtitle: 'Full bridge record and inspection history' };
 
-  return { title: 'Baraka Microcredit', subtitle: '' };
+  return { title: 'Bridge Information System', subtitle: 'BMS — Infrastructure Asset Management' };
 }
 
 export default function Navbar({ onMenuClick, sidebarOpen }) {

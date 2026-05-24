@@ -1,3 +1,5 @@
+import { FiTrendingUp, FiTrendingDown } from 'react-icons/fi';
+
 export default function StatsCard({ icon: Icon, value, label, color = 'blue', trend }) {
   return (
     <div className="stat-card">
@@ -8,11 +10,15 @@ export default function StatsCard({ icon: Icon, value, label, color = 'blue', tr
         <div className="stat-value">{value ?? '—'}</div>
         <div className="stat-label">{label}</div>
         {trend != null && (
-          <div style={{
-            fontSize: 11, marginTop: 4, fontWeight: 600,
+          <div className="stat-trend" style={{
             color: trend > 0 ? 'var(--success)' : trend < 0 ? 'var(--danger)' : 'var(--text-muted)',
           }}>
-            {trend > 0 ? `↑ ${trend}` : trend < 0 ? `↓ ${Math.abs(trend)}` : '—'} this month
+            {trend > 0
+              ? <FiTrendingUp size={11} />
+              : trend < 0
+              ? <FiTrendingDown size={11} />
+              : null}
+            {trend !== 0 ? Math.abs(trend) : '—'} this month
           </div>
         )}
       </div>

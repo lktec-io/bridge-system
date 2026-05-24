@@ -36,8 +36,8 @@ export default function Sidebar({ open, onClose }) {
             <MdDomain size={19} color="#fff" />
           </div>
           <div className="sidebar-logo-text">
-            <h1>BARAKA</h1>
-            <span>Microcredit Platform</span>
+            <h1>BMS</h1>
+            <span>Bridge Information System</span>
           </div>
           <button className="sidebar-close-btn" onClick={onClose} aria-label="Close sidebar">
             <FiX size={17} />
