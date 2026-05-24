@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FiGrid, FiDatabase, FiFileText, FiUsers, FiX } from 'react-icons/fi';
+import { FiGrid, FiDatabase, FiFileText, FiUsers, FiMap, FiX } from 'react-icons/fi';
 import { MdDomain } from 'react-icons/md';
 import { useAuth } from '../../context/AuthContext';
 
@@ -7,6 +7,7 @@ const NAV_MAIN = [
   { to: '/dashboard',   icon: FiGrid,     label: 'Dashboard',   end: true  },
   { to: '/bridges',     icon: FiDatabase, label: 'Bridges',     end: false },
   { to: '/inspections', icon: FiFileText, label: 'Inspections', end: true  },
+  { to: '/map',         icon: FiMap,      label: 'Bridge Map',  end: true  },
 ];
 
 const NAV_ADMIN = [

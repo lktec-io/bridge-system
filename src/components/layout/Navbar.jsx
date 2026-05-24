@@ -1,7 +1,12 @@
+import { useRef, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FiMenu, FiX, FiBell, FiLogOut, FiSun, FiMoon } from 'react-icons/fi';
+import {
+  FiMenu, FiX, FiBell, FiLogOut, FiSun, FiMoon,
+  FiAlertCircle, FiAlertTriangle, FiInfo, FiCheck,
+} from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useNotifications } from '../../context/NotificationContext';
 
 const ROUTE_META = {
   '/dashboard':    { title: 'Dashboard',        subtitle: 'System overview and key statistics' },
@@ -9,29 +14,64 @@ const ROUTE_META = {
   '/bridges/new':  { title: 'Register Bridge',   subtitle: 'Add a new bridge to the registry' },
   '/inspections':  { title: 'Inspections',        subtitle: 'All inspection records across bridges' },
   '/users':        { title: 'User Management',    subtitle: 'Manage system users and access roles' },
+  '/map':          { title: 'Bridge Map',         subtitle: 'Geographic overview of all bridge assets' },
 };
 
 function resolvePageMeta(pathname) {
   const exact = ROUTE_META[pathname];
   if (exact) return exact;
-
   if (pathname.includes('/inspections/new'))
-    return { title: 'New Inspection',   subtitle: 'Record a new field inspection' };
+    return { title: 'New Inspection',  subtitle: 'Record a new field inspection' };
   if (/\/inspections\/\d+\/edit/.test(pathname))
-    return { title: 'Edit Inspection',  subtitle: 'Update inspection record' };
+    return { title: 'Edit Inspection', subtitle: 'Update inspection record' };
   if (pathname.includes('/edit'))
-    return { title: 'Edit Bridge',      subtitle: 'Update bridge information' };
+    return { title: 'Edit Bridge',     subtitle: 'Update bridge information' };
   if (/\/bridges\/\d+$/.test(pathname))
-    return { title: 'Bridge Profile',   subtitle: 'Full bridge record and inspection history' };
-
+    return { title: 'Bridge Profile',  subtitle: 'Full bridge record and inspection history' };
   return { title: 'Bridge Information System', subtitle: 'BMS — Infrastructure Asset Management' };
+}
+
+const NOTIF_ICON = {
+  danger:  <FiAlertCircle  size={14} />,
+  warning: <FiAlertTriangle size={14} />,
+  info:    <FiInfo          size={14} />,
+};
+
+const NOTIF_COLOR = {
+  danger:  'var(--danger)',
+  warning: 'var(--warning)',
+  info:    'var(--primary)',
+};
+
+function timeAgo(ts) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const min  = Math.floor(diff / 60000);
+  if (min < 1)  return 'just now';
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr  < 24) return `${hr}h ago`;
+  return `${Math.floor(hr / 24)}d ago`;
 }
 
 export default function Navbar({ onMenuClick, sidebarOpen }) {
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { notifications, unreadCount, markAllRead, isRead } = useNotifications();
   const { title, subtitle } = resolvePageMeta(pathname);
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -69,11 +109,62 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
           {isDark ? <FiSun size={17} /> : <FiMoon size={17} />}
         </button>
 
-        {/* Notifications */}
-        <button className="navbar-icon-btn navbar-bell" title="Notifications" aria-label="Notifications">
-          <FiBell size={17} />
-          <span className="bell-dot" />
-        </button>
+        {/* Notification bell with dropdown */}
+        <div className="notif-wrapper" ref={notifRef}>
+          <button
+            className={`navbar-icon-btn navbar-bell${notifOpen ? ' notif-btn-active' : ''}`}
+            onClick={() => setNotifOpen((v) => !v)}
+            title="Notifications"
+            aria-label="Notifications"
+          >
+            <FiBell size={17} />
+            {unreadCount > 0 && (
+              <span className="bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <div className="notif-dropdown">
+              <div className="notif-dropdown-header">
+                <span className="notif-dropdown-title">
+                  Notifications
+                  {unreadCount > 0 && <span className="notif-unread-pill">{unreadCount} new</span>}
+                </span>
+                {unreadCount > 0 && (
+                  <button className="notif-mark-all" onClick={markAllRead}>
+                    <FiCheck size={11} /> Mark all read
+                  </button>
+                )}
+              </div>
+
+              <div className="notif-list">
+                {notifications.length === 0 ? (
+                  <div className="notif-empty">
+                    <FiBell size={24} style={{ opacity: .25 }} />
+                    <span>No notifications</span>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <div
+                      key={n.id}
+                      className={`notif-item${isRead(n.id) ? ' notif-read' : ''}`}
+                    >
+                      <div className="notif-item-icon" style={{ color: NOTIF_COLOR[n.type] }}>
+                        {NOTIF_ICON[n.type]}
+                      </div>
+                      <div className="notif-item-body">
+                        <div className="notif-item-title">{n.title}</div>
+                        <div className="notif-item-msg">{n.message}</div>
+                        <div className="notif-item-time">{timeAgo(n.ts)}</div>
+                      </div>
+                      {!isRead(n.id) && <span className="notif-unread-dot" />}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="navbar-divider" />
 

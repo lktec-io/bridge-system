@@ -8,9 +8,9 @@ import {
 } from 'react-icons/fi';
 import { MdWarning, MdReportProblem } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
-import StatsCard       from '../components/dashboard/StatsCard';
-import ConditionChart  from '../components/dashboard/ConditionChart';
-import RecentActivity  from '../components/dashboard/RecentActivity';
+import StatsCard      from '../components/dashboard/StatsCard';
+import PieChart       from '../components/dashboard/PieChart';
+import RecentActivity from '../components/dashboard/RecentActivity';
 import { ConditionBadge } from '../components/ui/Badge';
 
 const safeDate = (d, fmt) => {
@@ -24,6 +24,13 @@ function getGreeting() {
   if (h < 12) return 'Good Morning';
   if (h < 17) return 'Good Afternoon';
   return 'Good Evening';
+}
+
+function getLiveDateStr() {
+  const now = new Date();
+  return now.toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
 }
 
 // ── Trend bar chart ───────────────────────────────────────────
@@ -92,14 +99,23 @@ export default function Dashboard() {
   return (
     <div>
 
-      {/* ── Welcome section ─────────────────────────────── */}
-      <div className="welcome-section">
-        <div>
-          <div className="welcome-greeting">{getGreeting()}</div>
-          <h2 className="welcome-title">{user?.firstName} {user?.lastName}</h2>
-          <p className="welcome-subtitle">Here is the latest overview of the bridge network.</p>
+      {/* ── Welcome hero ────────────────────────────────── */}
+      <div className="welcome-hero">
+        <div className="welcome-glow wg1" aria-hidden="true" />
+        <div className="welcome-glow wg2" aria-hidden="true" />
+        <div className="welcome-hero-body">
+          <div className="welcome-eyebrow">
+            <span className="welcome-greeting-chip">{getGreeting()}</span>
+            <span className="welcome-date-chip">{getLiveDateStr()}</span>
+          </div>
+          <h2 className="welcome-title">
+            Welcome Back, <span className="welcome-name">{user?.firstName}</span>
+          </h2>
+          <p className="welcome-subtitle">
+            Bridge network status — {totalBridges ?? '…'} infrastructure assets monitored
+          </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={fetchStats} style={{ flexShrink: 0 }}>
+        <button className="btn btn-ghost btn-sm welcome-refresh-btn" onClick={fetchStats}>
           <FiRefreshCw size={13} /> Refresh
         </button>
       </div>
@@ -134,7 +150,7 @@ export default function Dashboard() {
       <div className="dashboard-panels">
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <ConditionChart counts={conditionCounts} total={totalBridges} />
+          <PieChart counts={conditionCounts} total={totalBridges} />
 
           <div className="card">
             <div className="card-header">

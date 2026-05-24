@@ -1,8 +1,24 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 import { MdDomain } from 'react-icons/md';
+
+function LiveDate() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+  const day  = now.toLocaleDateString('en-US', { weekday: 'long' });
+  const date = now.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+  return (
+    <div className="auth-date-block">
+      <span className="auth-date-day">{day}</span>
+      <span className="auth-date-full">{date}</span>
+    </div>
+  );
+}
 
 export default function Login() {
   const { login } = useAuth();
@@ -35,7 +51,7 @@ export default function Login() {
   return (
     <div className="auth-page">
 
-      {/* Animated background blobs */}
+      {/* Animated blobs */}
       <div className="auth-bg" aria-hidden="true">
         <div className="auth-blob auth-blob-1" />
         <div className="auth-blob auth-blob-2" />
@@ -58,8 +74,8 @@ export default function Login() {
 
         <div className="auth-hr" />
 
-        <h2 className="auth-form-title">Welcome back</h2>
-        <p className="auth-form-subtitle">Sign in to access your dashboard</p>
+        {/* Live date */}
+        <LiveDate />
 
         {error && (
           <div className="alert alert-error" style={{ marginBottom: 20 }}>

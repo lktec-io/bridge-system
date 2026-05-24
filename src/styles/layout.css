@@ -203,14 +203,7 @@
 .navbar-icon-btn:hover { background: var(--bg); color: var(--text); }
 .navbar-icon-btn:active { transform: scale(.94); }
 
-.navbar-bell .bell-dot {
-  position: absolute;
-  top: 7px; right: 8px;
-  width: 7px; height: 7px;
-  background: var(--danger);
-  border-radius: 50%;
-  border: 2px solid var(--bg-card);
-}
+/* bell-dot removed — badge is handled in index.css via .bell-badge */
 
 .navbar-logout:hover { background: var(--danger-light); color: var(--danger); }
 
