@@ -19,19 +19,19 @@ const safeDate = (d, fmt) => {
   return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
 };
 
-function getGreeting(role) {
+function getGreeting() {
   const h = new Date().getHours();
-  const part = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
-  const labels = { ADMIN: 'Administrator', ENGINEER: 'Engineer', INSPECTOR: 'Inspector' };
-  const label = labels[role] ?? 'User';
-  return `${part}, ${label}`;
+  if (h < 12) return 'Good Morning';
+  if (h < 17) return 'Good Afternoon';
+  return 'Good Evening';
 }
 
-function getLiveDateStr() {
-  const now = new Date();
-  return now.toLocaleDateString('en-US', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-  });
+function getHeroDay() {
+  return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+}
+
+function getHeroDate() {
+  return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 // ── Trend bar chart ───────────────────────────────────────────
@@ -100,24 +100,36 @@ export default function Dashboard() {
   return (
     <div>
 
-      {/* ── Welcome hero ────────────────────────────────── */}
-      <div className="welcome-hero">
-        <div className="welcome-glow wg1" aria-hidden="true" />
-        <div className="welcome-glow wg2" aria-hidden="true" />
-        <div className="welcome-hero-body">
-          <div className="welcome-eyebrow">
-            <span className="welcome-greeting-chip">{getGreeting(user?.role)}</span>
-            <span className="welcome-date-chip">{getLiveDateStr()}</span>
-          </div>
-          <h2 className="welcome-title">
-            Welcome Back, <span className="welcome-name">{user?.firstName}</span>
-          </h2>
-          <p className="welcome-subtitle">
-            Bridge network status — {totalBridges ?? '…'} infrastructure assets monitored
-          </p>
+      {/* ── Premium hero ─────────────────────────────── */}
+      <div className="hero-premium">
+        {/* Animated light layers */}
+        <div className="hero-lights" aria-hidden="true">
+          <div className="hero-streak hs1" />
+          <div className="hero-streak hs2" />
+          <div className="hero-streak hs3" />
+          <div className="hero-particle hp1" />
+          <div className="hero-particle hp2" />
+          <div className="hero-particle hp3" />
+          <div className="hero-particle hp4" />
+          <div className="hero-glow hg1" />
+          <div className="hero-glow hg2" />
+          <div className="hero-glow hg3" />
         </div>
-        <button className="btn btn-ghost btn-sm welcome-refresh-btn" onClick={fetchStats}>
-          <FiRefreshCw size={13} /> Refresh
+
+        <div className="hero-content">
+          <div className="hero-left">
+            <div className="hero-label">WELCOME BACK</div>
+            <div className="hero-name">{user?.firstName}</div>
+          </div>
+          <div className="hero-right">
+            <div className="hero-greeting">{getGreeting()}</div>
+            <div className="hero-date-day">{getHeroDay()}</div>
+            <div className="hero-date-full">{getHeroDate()}</div>
+          </div>
+        </div>
+
+        <button className="btn hero-refresh-btn" onClick={fetchStats} title="Refresh dashboard">
+          <FiRefreshCw size={14} />
         </button>
       </div>
 

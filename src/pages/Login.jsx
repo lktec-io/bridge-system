@@ -48,11 +48,11 @@ export default function Login() {
         {/* Brand */}
         <div className="auth-logo">
           <div className="auth-logo-icon">
-            <MdDomain size={26} color="#fff" />
+            <MdDomain size={32} color="#fff" />
           </div>
           <div className="auth-logo-text">
             <h1>BMS</h1>
-            <p>Bridge Information System</p>
+            <p>Bridge Management System</p>
           </div>
         </div>
 

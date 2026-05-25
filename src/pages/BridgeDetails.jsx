@@ -53,8 +53,10 @@ export default function BridgeDetails() {
   const [deleteInsId,   setDeleteInsId]   = useState(null);
   const [uploadType,    setUploadType]    = useState(null);
   const [uploadFile,    setUploadFile]    = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [uploadError,   setUploadError]   = useState('');
+  const [lightbox,      setLightbox]      = useState(null);
   const [actionError,   setActionError]   = useState('');
 
   const showError = (msg) => {
@@ -91,6 +93,20 @@ export default function BridgeDetails() {
     finally { setResolving(null); }
   };
 
+  const handleFileSelect = (file) => {
+    setUploadFile(file ?? null);
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+    setUploadPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const closeUploadModal = () => {
+    setUploadType(null);
+    setUploadFile(null);
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+    setUploadPreview(null);
+    setUploadError('');
+  };
+
   const handlePhotoUpload = async (e) => {
     e.preventDefault();
     if (!uploadFile || !uploadType) return;
@@ -102,7 +118,7 @@ export default function BridgeDetails() {
       fd.append('photoType', uploadType);
       await photosAPI.upload(fd);
       await fetchBridge();
-      setUploadType(null); setUploadFile(null);
+      closeUploadModal();
     } catch (err) { setUploadError(err.response?.data?.message || 'Upload failed'); }
     finally { setUploadLoading(false); }
   };
@@ -294,9 +310,11 @@ export default function BridgeDetails() {
               <div className="card-body">
                 <div className="photo-preview-grid">
                   {[{ type: 'PHOTO_1', label: 'Photo 1', photo: photo1 }, { type: 'PHOTO_2', label: 'Photo 2', photo: photo2 }].map(({ label, photo }) => (
-                    <div key={label} className="photo-preview-box" style={{ minHeight: 160 }}>
+                    <div key={label} className="photo-preview-box photo-clickable" style={{ minHeight: 160 }}
+                      onClick={() => photo && setLightbox(photoUrl(photo))}
+                    >
                       {photo
-                        ? <><img src={photoUrl(photo)} alt={label} /><span className="photo-label">{label}</span></>
+                        ? <><img src={photoUrl(photo)} alt={label} /><span className="photo-label">{label}</span><span className="photo-zoom-hint">Click to enlarge</span></>
                         : <div className="photo-placeholder"><MdPhoto /><span>{label} — not uploaded</span></div>
                       }
                     </div>
@@ -358,11 +376,12 @@ export default function BridgeDetails() {
         <div>
           <div className="photo-preview-grid" style={{ marginBottom: 20 }}>
             {[{ type: 'PHOTO_1', label: 'Photo 1', photo: photo1 }, { type: 'PHOTO_2', label: 'Photo 2', photo: photo2 }].map(({ type, label, photo }) => (
-              <div key={type} className="photo-preview-box" style={{ minHeight: 220 }}>
+              <div key={type} className="photo-preview-box photo-clickable" style={{ minHeight: 220 }}>
                 {photo ? (
                   <>
-                    <img src={photoUrl(photo)} alt={label} />
+                    <img src={photoUrl(photo)} alt={label} onClick={() => setLightbox(photoUrl(photo))} />
                     <span className="photo-label">{label}</span>
+                    <span className="photo-zoom-hint">Click to enlarge</span>
                     <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo"><MdClose size={13} /></button>
                   </>
                 ) : (
@@ -419,26 +438,49 @@ export default function BridgeDetails() {
       {/* ── Modals ───────────────────────────────────────── */}
       <Modal
         open={Boolean(uploadType)}
-        onClose={() => { setUploadType(null); setUploadFile(null); setUploadError(''); }}
+        onClose={closeUploadModal}
         title={`Upload ${uploadType === 'PHOTO_1' ? 'Photo 1' : 'Photo 2'}`}
         footer={
           <>
-            <button type="button" className="btn btn-secondary" onClick={() => { setUploadType(null); setUploadFile(null); }}>Cancel</button>
+            <button type="button" className="btn btn-secondary" onClick={closeUploadModal}>Cancel</button>
             <button type="button" className="btn btn-primary" disabled={!uploadFile || uploadLoading} onClick={handlePhotoUpload}>
-              {uploadLoading ? 'Uploading...' : 'Upload'}
+              {uploadLoading ? <><span className="spinner spinner-sm" /> Uploading...</> : <><MdCloudUpload size={15} /> Upload Photo</>}
             </button>
           </>
         }
       >
         {uploadError && <div className="alert alert-error"><MdErrorOutline />{uploadError}</div>}
-        <div className="photo-upload-area" onClick={() => document.getElementById('pfi').click()}>
-          <MdCloudUpload />
-          <p>{uploadFile ? uploadFile.name : 'Click to select image'}</p>
-          <span>JPG, PNG, WEBP · Max 5 MB</span>
-          <input id="pfi" type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => setUploadFile(e.target.files[0] ?? null)} />
-        </div>
-        {uploadFile && <p style={{ fontSize: 12, color: 'var(--success)', marginTop: 8 }}>Selected: {uploadFile.name}</p>}
+
+        {uploadPreview ? (
+          <div className="upload-preview-wrap">
+            <img src={uploadPreview} alt="Preview" className="upload-preview-img" />
+            <div className="upload-preview-meta">
+              <span>{uploadFile?.name}</span>
+              <button className="btn btn-ghost btn-sm" onClick={() => document.getElementById('pfi').click()}>
+                Change
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="photo-upload-area" onClick={() => document.getElementById('pfi').click()}>
+            <MdCloudUpload />
+            <p>Click to select image</p>
+            <span>JPG, PNG, WEBP · Max 5 MB</span>
+          </div>
+        )}
+        <input id="pfi" type="file" accept="image/*" style={{ display: 'none' }}
+          onChange={(e) => handleFileSelect(e.target.files[0])} />
       </Modal>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div className="lightbox-overlay" onClick={() => setLightbox(null)}>
+          <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Close">
+            <MdClose size={22} />
+          </button>
+          <img src={lightbox} alt="Bridge photo" className="lightbox-img" onClick={(e) => e.stopPropagation()} />
+        </div>
+      )}
 
       <ConfirmDialog
         open={deleteModal}
