@@ -135,7 +135,51 @@ export default function BridgeDetails() {
     catch { showError('Failed to delete inspection'); }
   };
 
-  if (loading) return <div className="loading-center"><div className="spinner" /><span>Loading bridge profile...</span></div>;
+  if (loading) return (
+    <div style={{ maxWidth: 1020, margin: '0 auto' }}>
+      {/* Breadcrumb skeleton */}
+      <div className="skel" style={{ height: 16, width: 180, marginBottom: 20, borderRadius: 4 }} />
+      {/* Profile header skeleton */}
+      <div className="bridge-profile-header" style={{ marginBottom: 4 }}>
+        <div className="condition-band" style={{ background: 'var(--border)' }} />
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+            <div style={{ flex: 1 }}>
+              <div className="skel" style={{ height: 28, width: 160, marginBottom: 10 }} />
+              <div className="skel skel-text" style={{ width: '55%', marginBottom: 8 }} />
+              <div className="skel skel-text" style={{ width: '40%' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[80, 70, 110, 36].map((w, i) => (
+                <div key={i} className="skel" style={{ height: 34, width: w, borderRadius: 8 }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Tab skeleton */}
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+        {[90, 120, 80, 80].map((w, i) => (
+          <div key={i} className="skel" style={{ height: 38, width: w, borderRadius: 8 }} />
+        ))}
+      </div>
+      {/* Content skeleton */}
+      <div className="bd-grid-2col" style={{ marginBottom: 20 }}>
+        {[0, 1].map((i) => (
+          <div key={i} className="card" style={{ padding: 20 }}>
+            <div className="skel skel-title" />
+            {Array.from({ length: 5 }).map((_, j) => (
+              <div key={j} className="skel skel-text" style={{ width: `${70 + j * 5}%`, marginBottom: 10 }} />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="card" style={{ padding: 20 }}>
+        <div className="skel skel-title" />
+        <div className="skel skel-card" />
+      </div>
+    </div>
+  );
   if (!bridge) return (
     <div className="empty-state">
       <MdErrorOutline />

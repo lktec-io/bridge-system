@@ -246,13 +246,13 @@
 /* ── Mobile overlay ────────────────────────────────────────── */
 .sidebar-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.55);
+  background: rgba(0,0,0,.52);
   z-index: 99;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  transition: opacity 0.5s cubic-bezier(0.16,1,0.3,1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .sidebar-overlay.open {
   opacity: 1;

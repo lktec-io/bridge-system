@@ -56,6 +56,66 @@ function TrendChart({ data }) {
   );
 }
 
+// ── Dashboard skeleton ────────────────────────────────────────
+function DashboardSkeleton() {
+  return (
+    <div className="dashboard-skeleton">
+      {/* Hero skeleton */}
+      <div className="skel" style={{ height: 120, borderRadius: 16, marginBottom: 20 }} />
+      {/* 6 stat cards */}
+      <div className="stats-grid-6" style={{ marginBottom: 20 }}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="stat-card" style={{ padding: 20 }}>
+            <div className="skel skel-circle" style={{ width: 40, height: 40, marginBottom: 12 }} />
+            <div className="skel" style={{ height: 28, width: '60%', marginBottom: 8 }} />
+            <div className="skel skel-text" style={{ width: '80%' }} />
+          </div>
+        ))}
+      </div>
+      {/* Middle row */}
+      <div className="dashboard-panels" style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div className="card" style={{ height: 240 }}>
+            <div style={{ padding: 20 }}>
+              <div className="skel skel-title" />
+              <div className="skel skel-card" style={{ height: 160 }} />
+            </div>
+          </div>
+          <div className="card" style={{ height: 180 }}>
+            <div style={{ padding: 20 }}>
+              <div className="skel skel-title" />
+              <div className="skel skel-card" style={{ height: 100 }} />
+            </div>
+          </div>
+        </div>
+        <div className="card" style={{ height: 440 }}>
+          <div style={{ padding: 20 }}>
+            <div className="skel skel-title" />
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'center' }}>
+                <div className="skel skel-circle" style={{ width: 32, height: 32, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div className="skel skel-text" style={{ width: '70%', marginBottom: 4 }} />
+                  <div className="skel skel-text" style={{ width: '45%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      {/* Table skeleton */}
+      <div className="card">
+        <div style={{ padding: 20 }}>
+          <div className="skel skel-title" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="skel" style={{ height: 40, marginBottom: 8, borderRadius: 6 }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────
 export default function Dashboard() {
   const { user } = useAuth();
@@ -74,12 +134,7 @@ export default function Dashboard() {
 
   useEffect(() => { fetchStats(); }, []);
 
-  if (loading) return (
-    <div className="loading-center">
-      <div className="spinner" />
-      <span>Loading dashboard…</span>
-    </div>
-  );
+  if (loading) return <DashboardSkeleton />;
 
   if (error) return (
     <div className="empty-state">

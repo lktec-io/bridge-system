@@ -156,7 +156,35 @@ export default function Users() {
     } finally { setDeleting(false); }
   };
 
-  if (loading) return <div className="loading-center"><div className="spinner" /><span>Loading users...</span></div>;
+  if (loading) return (
+    <div>
+      <div className="page-header" style={{ marginBottom: 20 }}>
+        <div className="skel" style={{ height: 40, width: 200, borderRadius: 8 }} />
+        <div className="skel" style={{ height: 34, width: 100, borderRadius: 8 }} />
+      </div>
+      <div className="card">
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+          <div className="skel" style={{ height: 14, width: 160 }} />
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+            <div className="skel skel-circle" style={{ width: 36, height: 36, flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div className="skel" style={{ height: 14, width: `${130 + i * 20}px`, marginBottom: 6 }} />
+              <div className="skel" style={{ height: 12, width: `${100 + i * 15}px` }} />
+            </div>
+            <div className="skel" style={{ height: 22, width: 70, borderRadius: 99 }} />
+            <div className="skel" style={{ height: 14, width: 80 }} />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <div className="skel" style={{ height: 30, width: 30, borderRadius: 6 }} />
+              <div className="skel" style={{ height: 30, width: 30, borderRadius: 6 }} />
+              <div className="skel" style={{ height: 30, width: 30, borderRadius: 6 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div>

@@ -84,17 +84,17 @@ export default function MapView() {
       {/* Map */}
       <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
         {loading ? (
-          <div className="loading-center" style={{ height: 480 }}>
+          <div className="loading-center" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
             <div className="spinner" />
             <span>Loading bridge locations…</span>
           </div>
         ) : error ? (
-          <div className="empty-state" style={{ height: 480 }}>
+          <div className="empty-state" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
             <p>{error}</p>
             <button className="btn btn-primary btn-sm" onClick={fetch}>Retry</button>
           </div>
         ) : withCoords.length === 0 ? (
-          <div className="empty-state" style={{ height: 480 }}>
+          <div className="empty-state" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
             <FiMapPin size={40} style={{ opacity: .3 }} />
             <h3>No GPS data available</h3>
             <p>Add northing and easting coordinates to bridge records to display them on the map.</p>
@@ -103,7 +103,7 @@ export default function MapView() {
           <MapContainer
             center={center}
             zoom={10}
-            style={{ height: 540, width: '100%' }}
+            style={{ height: 'clamp(340px, 55vh, 580px)', width: '100%' }}
             scrollWheelZoom
           >
             <TileLayer
