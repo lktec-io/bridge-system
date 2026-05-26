@@ -29,7 +29,8 @@ const condClass = (s) => ({ GOOD: 'good', FAIR: 'fair', POOR: 'poor' })[s] ?? 'n
 const photoUrl = (p) => {
   if (!p?.photoUrl) return '';
   if (p.photoUrl.startsWith('http')) return p.photoUrl;
-  const base = import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || '';
+  // Legacy relative paths: use dedicated media server URL or fall back to API origin
+  const base = (import.meta.env.VITE_MEDIA_URL || import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') || '').replace(/\/$/, '');
   return `${base}${p.photoUrl}`;
 };
 
@@ -311,10 +312,19 @@ export default function BridgeDetails() {
                 <div className="photo-preview-grid">
                   {[{ type: 'PHOTO_1', label: 'Photo 1', photo: photo1 }, { type: 'PHOTO_2', label: 'Photo 2', photo: photo2 }].map(({ label, photo }) => (
                     <div key={label} className="photo-preview-box photo-clickable" style={{ minHeight: 160 }}
-                      onClick={() => photo && setLightbox(photoUrl(photo))}
+                      onClick={() => photo && photoUrl(photo) && setLightbox(photoUrl(photo))}
                     >
-                      {photo
-                        ? <><img src={photoUrl(photo)} alt={label} /><span className="photo-label">{label}</span><span className="photo-zoom-hint">Click to enlarge</span></>
+                      {photo && photoUrl(photo)
+                        ? <>
+                            <img
+                              src={photoUrl(photo)}
+                              alt={label}
+                              loading="lazy"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling?.remove(); e.currentTarget.closest('.photo-preview-box').classList.add('photo-load-error'); }}
+                            />
+                            <span className="photo-label">{label}</span>
+                            <span className="photo-zoom-hint">Click to enlarge</span>
+                          </>
                         : <div className="photo-placeholder"><MdPhoto /><span>{label} — not uploaded</span></div>
                       }
                     </div>
@@ -377,12 +387,21 @@ export default function BridgeDetails() {
           <div className="photo-preview-grid" style={{ marginBottom: 20 }}>
             {[{ type: 'PHOTO_1', label: 'Photo 1', photo: photo1 }, { type: 'PHOTO_2', label: 'Photo 2', photo: photo2 }].map(({ type, label, photo }) => (
               <div key={type} className="photo-preview-box photo-clickable" style={{ minHeight: 220 }}>
-                {photo ? (
+                {photo && photoUrl(photo) ? (
                   <>
-                    <img src={photoUrl(photo)} alt={label} onClick={() => setLightbox(photoUrl(photo))} />
+                    <img
+                      src={photoUrl(photo)}
+                      alt={label}
+                      loading="lazy"
+                      onClick={() => setLightbox(photoUrl(photo))}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.closest('.photo-preview-box').classList.add('photo-load-error');
+                      }}
+                    />
                     <span className="photo-label">{label}</span>
                     <span className="photo-zoom-hint">Click to enlarge</span>
-                    <button className="photo-delete no-print" onClick={() => handlePhotoDelete(photo.id)} title="Delete photo"><MdClose size={13} /></button>
+                    <button className="photo-delete no-print" onClick={(e) => { e.stopPropagation(); handlePhotoDelete(photo.id); }} title="Delete photo"><MdClose size={13} /></button>
                   </>
                 ) : (
                   <div className="photo-placeholder" onClick={() => setUploadType(type)}>

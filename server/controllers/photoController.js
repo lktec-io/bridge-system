@@ -9,6 +9,10 @@ import { logHistory } from '../services/historyService.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const toISO = (v) => v ? (v instanceof Date ? v.toISOString() : new Date(v).toISOString()) : null;
 
+// Build media base URL for local uploads (no trailing slash)
+const mediaBase = () =>
+  (process.env.SERVER_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/$/, '');
+
 export const uploadPhoto = asyncHandler(async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
@@ -28,7 +32,7 @@ export const uploadPhoto = asyncHandler(async (req, res) => {
   if (existing.length) {
     const old = existing[0];
     if (process.env.UPLOAD_MODE === 'cloudinary' && old.public_id) {
-      await cloudinary.uploader.destroy(old.public_id);
+      await cloudinary.uploader.destroy(old.public_id).catch(() => {});
     } else if (old.photo_url) {
       const localPath = path.join(__dirname, '..', 'uploads', path.basename(old.photo_url));
       if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
@@ -37,11 +41,14 @@ export const uploadPhoto = asyncHandler(async (req, res) => {
   }
 
   let photoUrl, publicId;
+
   if (process.env.UPLOAD_MODE === 'cloudinary') {
+    // multer-storage-cloudinary sets req.file.path = secure_url, req.file.filename = public_id
     photoUrl = req.file.path;
     publicId = req.file.filename;
   } else {
-    photoUrl = `/uploads/${req.file.filename}`;
+    // Local disk storage: store full absolute URL so frontend doesn't need to reconstruct it
+    photoUrl = `${mediaBase()}/uploads/${req.file.filename}`;
     publicId = null;
   }
 
@@ -71,7 +78,7 @@ export const deletePhoto = asyncHandler(async (req, res) => {
   const photo = rows[0];
 
   if (process.env.UPLOAD_MODE === 'cloudinary' && photo.public_id) {
-    await cloudinary.uploader.destroy(photo.public_id);
+    await cloudinary.uploader.destroy(photo.public_id).catch(() => {});
   } else if (photo.photo_url) {
     const localPath = path.join(__dirname, '..', 'uploads', path.basename(photo.photo_url));
     if (fs.existsSync(localPath)) fs.unlinkSync(localPath);
