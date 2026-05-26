@@ -79,6 +79,13 @@ export default function BridgeDetails() {
 
   useEffect(() => { fetchBridge(); }, [fetchBridge]);
 
+  useEffect(() => {
+    if (!lightbox) return;
+    const onKey = (e) => { if (e.key === 'Escape') setLightbox(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
   const handleDeleteBridge = async () => {
     setDeleting(true);
     try { await bridgesAPI.delete(id); navigate('/bridges'); }
@@ -364,7 +371,11 @@ export default function BridgeDetails() {
                               src={photoUrl(photo)}
                               alt={label}
                               loading="lazy"
-                              onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling?.remove(); e.currentTarget.closest('.photo-preview-box').classList.add('photo-load-error'); }}
+                              onError={(e) => {
+                                const box = e.currentTarget.closest('.photo-preview-box');
+                                if (box) box.classList.add('photo-load-error');
+                                e.currentTarget.style.display = 'none';
+                              }}
                             />
                             <span className="photo-label">{label}</span>
                             <span className="photo-zoom-hint">Click to enlarge</span>
@@ -439,8 +450,9 @@ export default function BridgeDetails() {
                       loading="lazy"
                       onClick={() => setLightbox(photoUrl(photo))}
                       onError={(e) => {
+                        const box = e.currentTarget.closest('.photo-preview-box');
+                        if (box) box.classList.add('photo-load-error');
                         e.currentTarget.style.display = 'none';
-                        e.currentTarget.closest('.photo-preview-box').classList.add('photo-load-error');
                       }}
                     />
                     <span className="photo-label">{label}</span>

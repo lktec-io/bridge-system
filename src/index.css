@@ -160,6 +160,7 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 .table td.muted { color: var(--text-muted); }
 tr.row-poor td           { background: #fff5f5; }
 tr.row-poor:hover td     { background: #fee2e2 !important; }
+.table-compact { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-compact .table td,
 .table-compact .table th { padding: 9px 14px; }
 
@@ -321,16 +322,21 @@ tr.row-poor:hover td     { background: #fee2e2 !important; }
 .input-leading-icon {
   position: absolute; left: 13px; top: 50%;
   transform: translateY(-50%);
-  color: rgba(255,255,255,.3); pointer-events: none; z-index: 1;
+  color: var(--text-muted); pointer-events: none; z-index: 1;
 }
 .input-trailing-btn {
   position: absolute; right: 11px; top: 50%;
   transform: translateY(-50%);
   background: none; border: none; cursor: pointer;
-  color: rgba(255,255,255,.3); padding: 4px; display: flex; align-items: center;
+  color: var(--text-muted); padding: 4px; display: flex; align-items: center;
   transition: color var(--transition);
 }
-.input-trailing-btn:hover { color: rgba(255,255,255,.7); }
+.input-trailing-btn:hover { color: var(--text); }
+
+/* Login dark-glass card overrides */
+.auth-card .input-leading-icon  { color: rgba(255,255,255,.3); }
+.auth-card .input-trailing-btn  { color: rgba(255,255,255,.3); }
+.auth-card .input-trailing-btn:hover { color: rgba(255,255,255,.7); }
 
 /* Remember me / forgot row */
 .auth-row {
