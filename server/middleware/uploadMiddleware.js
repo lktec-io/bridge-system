@@ -2,8 +2,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
-import cloudinary from '../config/cloudinary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,12 +13,17 @@ const fileFilter = (req, file, cb) => {
 let storage;
 
 if (process.env.UPLOAD_MODE === 'cloudinary') {
+  // Dynamic import: only loaded when cloudinary mode is explicitly enabled.
+  // This prevents a startup crash if multer-storage-cloudinary is not installed.
+  const { CloudinaryStorage }     = await import('multer-storage-cloudinary');
+  const { default: cloudinary }   = await import('../config/cloudinary.js');
+
   storage = new CloudinaryStorage({
     cloudinary,
     params: {
-      folder:           'bms_bridges',
-      allowed_formats:  ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-      transformation:   [{ quality: 'auto', fetch_format: 'auto' }],
+      folder:          'bms_bridges',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+      transformation:  [{ quality: 'auto', fetch_format: 'auto' }],
     },
   });
 } else {
