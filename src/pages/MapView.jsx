@@ -2,9 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import { bridgesAPI } from '../api/bridges';
-import { FiRefreshCw, FiMapPin } from 'react-icons/fi';
+import { format } from 'date-fns';
+import { FiRefreshCw, FiMapPin, FiCalendar, FiUser, FiExternalLink } from 'react-icons/fi';
 import { ConditionBadge } from '../components/ui/Badge';
 import 'leaflet/dist/leaflet.css';
+
+const safeDate = (d) => {
+  if (!d) return null;
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? null : format(dt, 'dd MMM yyyy');
+};
 
 const COND_COLOR = {
   GOOD:        '#10b981',
@@ -118,19 +125,36 @@ export default function MapView() {
                     weight:      2,
                   }}
                 >
-                  <Popup>
-                    <div style={{ minWidth: 160 }}>
-                      <strong style={{ fontSize: 14 }}>{b.serialNumber}</strong>
-                      {b.section  && <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>{b.section}</div>}
-                      {b.chainage && <div style={{ fontSize: 12, color: '#666' }}>Km {Number(b.chainage).toFixed(3)}</div>}
-                      <div style={{ marginTop: 6 }}>
+                  <Popup minWidth={210} maxWidth={280}>
+                    <div className="map-popup">
+                      <div className="map-popup-header">
+                        <span className="map-popup-serial">{b.serialNumber}</span>
                         <ConditionBadge status={cond} />
                       </div>
-                      <Link
-                        to={`/bridges/${b.id}`}
-                        style={{ display: 'block', marginTop: 8, fontSize: 12, color: '#1a56db', fontWeight: 600 }}
-                      >
-                        View Details →
+                      {b.section && (
+                        <div className="map-popup-row">
+                          <FiMapPin size={11} />
+                          <span>{b.section}{b.chainage ? ` — Km ${Number(b.chainage).toFixed(3)}` : ''}</span>
+                        </div>
+                      )}
+                      {b.inspections?.[0] && (
+                        <>
+                          {safeDate(b.inspections[0].inspectionDate) && (
+                            <div className="map-popup-row">
+                              <FiCalendar size={11} />
+                              <span>{safeDate(b.inspections[0].inspectionDate)}</span>
+                            </div>
+                          )}
+                          {b.inspections[0].inspectorName && (
+                            <div className="map-popup-row">
+                              <FiUser size={11} />
+                              <span>{b.inspections[0].inspectorName}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+                      <Link to={`/bridges/${b.id}`} className="map-popup-link">
+                        <FiExternalLink size={11} /> View Bridge Profile
                       </Link>
                     </div>
                   </Popup>

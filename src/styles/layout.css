@@ -14,7 +14,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: margin-left 0.5s cubic-bezier(0.16,1,0.3,1);
 }
 
 .page-content {
@@ -39,7 +39,7 @@
   display: flex;
   flex-direction: column;
   z-index: 100;
-  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
   overflow-y: auto;
   overflow-x: hidden;
   border-right: 1px solid rgba(255,255,255,.04);
@@ -163,7 +163,7 @@
   display: flex; align-items: center; justify-content: space-between;
   padding: 0 28px;
   z-index: 90;
-  transition: left 0.3s cubic-bezier(0.4,0,0.2,1), background 0.25s ease, border-color 0.25s ease;
+  transition: left 0.5s cubic-bezier(0.16,1,0.3,1), background 0.25s ease, border-color 0.25s ease;
   box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(0,0,0,.04);
 }
 
@@ -283,14 +283,14 @@
 
   .navbar-user-info { display: none; }
 
-  /* Stagger nav links in on open */
+  /* Stagger nav links in on open — slower, premium feel */
   .sidebar.open .nav-link {
-    animation: navLinkIn 0.28s cubic-bezier(0.16,1,0.3,1) both;
-    animation-delay: calc(var(--nav-i, 0) * 50ms + 60ms);
+    animation: navLinkIn 0.42s cubic-bezier(0.16,1,0.3,1) both;
+    animation-delay: calc(var(--nav-i, 0) * 70ms + 80ms);
   }
 
   @keyframes navLinkIn {
-    from { opacity: 0; transform: translateX(-14px); }
+    from { opacity: 0; transform: translateX(-18px); }
     to   { opacity: 1; transform: translateX(0); }
   }
 }
@@ -392,3 +392,43 @@
     font-weight: 700;
   }
 }
+
+/* ── User avatar circle (desktop table) ────────────────────── */
+.user-avatar-circle {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #7c3aed);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+  letter-spacing: .3px;
+}
+
+/* ── User table action button group ────────────────────────── */
+.users-action-group {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── You chip — also used outside mobile breakpoint ────────── */
+.you-chip {
+  display: inline-block;
+  font-size: 11px;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* ── Bare icon button (close alerts etc.) ──────────────────── */
+.btn-icon-bare {
+  background: none; border: none;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2px; border-radius: 4px;
+  cursor: pointer; color: inherit;
+  transition: opacity var(--transition);
+}
+.btn-icon-bare:hover { opacity: .7; }
