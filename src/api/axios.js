@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://bridge.nardio.online/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://bridge.clixworks.co.tz/api',
   timeout: 15000,
 });
 

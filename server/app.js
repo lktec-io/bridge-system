@@ -34,7 +34,7 @@ app.disable('x-powered-by');
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'https://bridge.nardio.online',
-  'https://bridge.nardio.online',
+  'https://bridge.clixworks.co.tz',
 ].filter(Boolean);
 
 app.use(cors({
