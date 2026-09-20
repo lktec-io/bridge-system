@@ -19,7 +19,9 @@ function mapBridgeRow(r) {
   return {
     id:            r.id,
     serialNumber:  r.serial_number,
+    bridgeName:    r.bridge_name ?? null,
     structureType: r.structure_type,
+    constructionYear: r.construction_year ?? null,
     section:       r.section,
     chainage:      r.chainage,
     northing:      r.northing   ?? null,
@@ -73,7 +75,8 @@ export const getAllBridges = async ({ search = '', condition = '', dateFilter = 
 
   const [rows] = await pool.query(
     `SELECT
-       b.id, b.serial_number, b.structure_type, b.section, b.chainage,
+       b.id, b.serial_number, b.bridge_name, b.construction_year,
+       b.structure_type, b.section, b.chainage,
        b.northing, b.easting, b.altitude, b.length, b.width, b.height,
        b.number_of_spans, b.remark, b.created_at, b.updated_at,
        (SELECT COUNT(*) FROM inspections WHERE bridge_id = b.id) AS inspection_count,
@@ -207,14 +210,16 @@ export const getBridgeById = async (id) => {
 export const createBridge = async (data, userId) => {
   const [result] = await pool.query(
     `INSERT INTO bridges
-       (serial_number, structure_type, section, chainage,
-        northing, easting, altitude, length, width, height, number_of_spans, remark)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (serial_number, bridge_name, structure_type, section, chainage,
+        northing, easting, altitude, length, width, height, number_of_spans,
+        construction_year, remark)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      data.serialNumber, data.structureType, data.section, data.chainage,
+      data.serialNumber, data.bridgeName ?? null,
+      data.structureType, data.section, data.chainage,
       data.northing ?? null, data.easting   ?? null, data.altitude     ?? null,
       data.length   ?? null, data.width     ?? null, data.height       ?? null,
-      data.numberOfSpans ?? null, data.remark ?? null,
+      data.numberOfSpans ?? null, data.constructionYear ?? null, data.remark ?? null,
     ]
   );
 
@@ -231,6 +236,8 @@ export const updateBridge = async (id, data, userId) => {
 
   const COL = {
     serialNumber:  'serial_number',
+    bridgeName:    'bridge_name',
+    constructionYear: 'construction_year',
     structureType: 'structure_type',
     section:       'section',
     chainage:      'chainage',

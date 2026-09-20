@@ -1,7 +1,62 @@
 import pool from '../config/database.js';
+import { getMaintenanceSummary } from './maintenanceService.js';
+import { getSensorSummary }      from './sensorService.js';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const toISO  = (v) => v ? (v instanceof Date ? v.toISOString() : new Date(v).toISOString()) : null;
+
+/* Bridges are considered overdue after this long without an inspection.
+   Matches the threshold used by the inspection reminder job. */
+const OVERDUE_MONTHS = 6;
+
+/**
+ * Structural Health Index (SHI)
+ * ─────────────────────────────
+ * A single 0–100 figure for the whole monitored portfolio.
+ *
+ *   SHI = Σ(condition weight) / number of INSPECTED bridges
+ *
+ *   GOOD = 100   FAIR = 60   POOR = 20
+ *
+ * Uninspected structures are deliberately EXCLUDED from the average —
+ * counting them as either healthy or failed would be an invention.
+ * They are reported separately as `coverage` so the figure can be read
+ * honestly: "SHI 74 across 82% of the portfolio".
+ */
+const HEALTH_WEIGHTS = { GOOD: 100, FAIR: 60, POOR: 20 };
+
+export function computeHealthIndex(counts) {
+  const inspected = (counts.GOOD ?? 0) + (counts.FAIR ?? 0) + (counts.POOR ?? 0);
+  if (inspected === 0) return null;
+  const score =
+    (counts.GOOD ?? 0) * HEALTH_WEIGHTS.GOOD +
+    (counts.FAIR ?? 0) * HEALTH_WEIGHTS.FAIR +
+    (counts.POOR ?? 0) * HEALTH_WEIGHTS.POOR;
+  return Math.round(score / inspected);
+}
+
+/* Sub-modules must never take the dashboard down. A missing
+   maintenance_records or sensor_devices table (migration not yet
+   applied) degrades that panel only. */
+const EMPTY_MAINTENANCE = {
+  byStatus: { PLANNED: 0, IN_PROGRESS: 0, COMPLETED: 0, CANCELLED: 0 },
+  emergencyOpen: 0, plannedOverdue: 0, spendYtd: 0, open: 0, available: false,
+};
+const EMPTY_SENSORS = {
+  deviceCount: 0, activeCount: 0, bridgesMonitored: 0,
+  byStatus: { OK: 0, WARN: 0, ALARM: 0 }, readings24h: 0,
+  instrumented: false, available: false,
+};
+
+async function optional(fn, fallback, label) {
+  try {
+    const value = await fn();
+    return { ...value, available: true };
+  } catch (err) {
+    console.error(`[dashboard] ${label} unavailable: ${err.message}`);
+    return fallback;
+  }
+}
 
 const LATEST_INS_JOIN = `
   LEFT JOIN inspections li ON li.id = (
@@ -85,11 +140,13 @@ export const getDashboardStats = async () => {
     pool.query(`
       SELECT i.id, i.bridge_id, i.inspector_name, i.inspection_date,
              i.condition_status, i.is_resolved,
-             b.serial_number AS b_serial, b.section AS b_section
+             b.serial_number AS b_serial, b.section AS b_section,
+             b.bridge_name   AS b_name,   b.structure_type AS b_structure,
+             b.chainage      AS b_chainage
       FROM inspections i
       LEFT JOIN bridges b ON b.id = i.bridge_id
       ORDER BY i.inspection_date DESC, i.id DESC
-      LIMIT 5
+      LIMIT 12
     `),
 
     // 9. 12 most recent history log entries
@@ -150,7 +207,13 @@ export const getDashboardStats = async () => {
     inspectionDate: toISO(r.inspection_date),
     conditionStatus: r.condition_status,
     isResolved:     Boolean(r.is_resolved),
-    bridge: r.b_serial ? { serialNumber: r.b_serial, section: r.b_section } : null,
+    bridge: r.b_serial ? {
+      serialNumber:  r.b_serial,
+      bridgeName:    r.b_name ?? null,
+      section:       r.b_section,
+      structureType: r.b_structure ?? null,
+      chainage:      r.b_chainage ?? null,
+    } : null,
   }));
 
   // ── Recent activity ───────────────────────────────────────
@@ -166,7 +229,72 @@ export const getDashboardStats = async () => {
     bridge: r.b_serial ? { serialNumber: r.b_serial, section: r.b_section }     : null,
   }));
 
+  // ── Second wave: quarter throughput, overdue, sub-modules ──
+  const [
+    [[{ inspectionsThisQuarter }]],
+    [[{ bridgesInspectedThisQuarter }]],
+    [[{ inspectionsLastQuarter }]],
+    [[{ overdueInspections }]],
+    maintenance,
+    sensors,
+  ] = await Promise.all([
+
+    pool.query(`
+      SELECT COUNT(*) AS inspectionsThisQuarter
+      FROM inspections
+      WHERE YEAR(inspection_date)    = YEAR(CURDATE())
+        AND QUARTER(inspection_date) = QUARTER(CURDATE())
+    `),
+
+    pool.query(`
+      SELECT COUNT(DISTINCT bridge_id) AS bridgesInspectedThisQuarter
+      FROM inspections
+      WHERE YEAR(inspection_date)    = YEAR(CURDATE())
+        AND QUARTER(inspection_date) = QUARTER(CURDATE())
+    `),
+
+    pool.query(`
+      SELECT COUNT(*) AS inspectionsLastQuarter
+      FROM inspections
+      WHERE YEAR(inspection_date)    = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 QUARTER))
+        AND QUARTER(inspection_date) = QUARTER(DATE_SUB(CURDATE(), INTERVAL 1 QUARTER))
+    `),
+
+    // Never inspected, or last inspected beyond the reminder threshold
+    pool.query(`
+      SELECT COUNT(*) AS overdueInspections
+      FROM bridges b
+      ${LATEST_INS_JOIN}
+      WHERE li.inspection_date IS NULL
+         OR li.inspection_date < DATE_SUB(NOW(), INTERVAL ${OVERDUE_MONTHS} MONTH)
+    `),
+
+    optional(getMaintenanceSummary, EMPTY_MAINTENANCE, 'maintenance summary'),
+    optional(getSensorSummary,      EMPTY_SENSORS,     'sensor summary'),
+  ]);
+
+  /* Critical alert roll-up.
+     Deliberately excludes `unresolvedDefects` from the total: those rows
+     overlap almost completely with POOR-condition structures and would
+     double-count the same physical problem. The breakdown is returned so
+     the UI can show what the number is made of. */
+  const criticalAlerts = {
+    poorCondition:        conditionCounts.POOR ?? 0,
+    overdueInspections:   Number(overdueInspections),
+    emergencyMaintenance: maintenance.emergencyOpen ?? 0,
+    sensorAlarms:         sensors.byStatus?.ALARM ?? 0,
+    unresolvedDefects:    Number(unresolvedDefects),
+  };
+  criticalAlerts.total =
+    criticalAlerts.poorCondition +
+    criticalAlerts.overdueInspections +
+    criticalAlerts.emergencyMaintenance +
+    criticalAlerts.sensorAlarms;
+
+  const inspectedCount = (conditionCounts.GOOD ?? 0) + (conditionCounts.FAIR ?? 0) + (conditionCounts.POOR ?? 0);
+
   return {
+    // ── existing contract — unchanged ──
     totalBridges:          Number(totalBridges),
     recentlyInspected:     Number(recentlyInspected),
     unresolvedDefects:     Number(unresolvedDefects),
@@ -176,5 +304,25 @@ export const getDashboardStats = async () => {
     inspectionTrend,
     poorBridges,
     recentInspections,
+
+    // ── added for the monitoring dashboard ──
+    healthIndex:  computeHealthIndex(conditionCounts),
+    healthWeights: HEALTH_WEIGHTS,
+    coverage: {
+      inspected: inspectedCount,
+      total:     Number(totalBridges),
+      pct:       Number(totalBridges) > 0 ? Math.round((inspectedCount / Number(totalBridges)) * 100) : 0,
+    },
+    quarter: {
+      inspections:      Number(inspectionsThisQuarter),
+      bridgesInspected: Number(bridgesInspectedThisQuarter),
+      previous:         Number(inspectionsLastQuarter),
+      delta:            Number(inspectionsThisQuarter) - Number(inspectionsLastQuarter),
+    },
+    overdueInspections: Number(overdueInspections),
+    criticalAlerts,
+    maintenance,
+    sensors,
+    generatedAt: new Date().toISOString(),
   };
 };

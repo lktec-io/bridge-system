@@ -1,36 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { FiSave, FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
 import { bridgesAPI } from '../api/bridges';
-import { MdSave, MdArrowBack, MdErrorOutline } from 'react-icons/md';
 
 const empty = {
-  serialNumber: '', structureType: '', section: '', chainage: '',
+  serialNumber: '', bridgeName: '', structureType: '', section: '', chainage: '',
   northing: '', easting: '', altitude: '',
-  length: '', width: '', height: '', numberOfSpans: '', remark: '',
+  length: '', width: '', height: '', numberOfSpans: '',
+  constructionYear: '', remark: '',
 };
 
 const structureTypes = [
-  'Box Culvert', 'Pipe Culvert', 'Slab Bridge', 'Girder Bridge',
-  'Arch Bridge', 'Suspension Bridge', 'Truss Bridge', 'Cable-Stayed Bridge', 'Other',
+  'Box Culvert', 'Pipe Culvert', 'Corrugated Steel Pipe Culvert',
+  'Slab Bridge', 'Reinforced Concrete Slab Bridge', 'Concrete Beam Bridge',
+  'Pre-stressed Concrete Bridge', 'Girder Bridge', 'Steel Truss Bridge',
+  'Arch Bridge', 'Suspension Bridge', 'Cable-Stayed Bridge', 'Other',
 ];
 
-// Defined outside BridgeForm so React sees a stable component identity across renders.
-// If defined inside, React creates a new component type on every render, unmounting and
-// remounting the input, which loses keyboard focus after each keystroke.
-function Field({ name, label, required, type = 'text', form, errors, onChange, ...props }) {
+/* Declared outside the page component so React keeps a stable component
+   identity across renders — defining it inline remounts the input on every
+   keystroke and loses focus. */
+function Field({ name, label, required, type = 'text', form, errors, onChange, hint, mono, ...props }) {
   return (
     <div className="form-group">
       <label className="form-label" htmlFor={name}>
-        {label}{required && <span className="required"> *</span>}
+        {label}{required && <span style={{ color: 'var(--accent-dark)' }}> *</span>}
       </label>
       <input
         id={name} name={name} type={type}
-        className={`form-control${errors[name] ? ' error' : ''}`}
+        className={`form-control${mono ? ' mono' : ''}`}
         value={form[name]} onChange={onChange}
-        style={errors[name] ? { borderColor: 'var(--danger)' } : {}}
+        style={errors[name] ? { borderColor: 'var(--poor)' } : undefined}
         {...props}
       />
-      {errors[name] && <span className="form-error"><MdErrorOutline size={13} />{errors[name]}</span>}
+      {hint && !errors[name] && <div className="form-hint">{hint}</div>}
+      {errors[name] && (
+        <span className="form-error"><FiAlertCircle size={12} />{errors[name]}</span>
+      )}
     </div>
   );
 }
@@ -52,21 +58,23 @@ export default function BridgeForm() {
       try {
         const { data } = await bridgesAPI.getById(id);
         setForm({
-          serialNumber:  data.serialNumber  ?? '',
-          structureType: data.structureType ?? '',
-          section:       data.section       ?? '',
-          chainage:      data.chainage      ?? '',
-          northing:      data.northing      ?? '',
-          easting:       data.easting       ?? '',
-          altitude:      data.altitude      ?? '',
-          length:        data.length        ?? '',
-          width:         data.width         ?? '',
-          height:        data.height        ?? '',
-          numberOfSpans: data.numberOfSpans ?? '',
-          remark:        data.remark        ?? '',
+          serialNumber:     data.serialNumber     ?? '',
+          bridgeName:       data.bridgeName       ?? '',
+          structureType:    data.structureType    ?? '',
+          section:          data.section          ?? '',
+          chainage:         data.chainage         ?? '',
+          northing:         data.northing         ?? '',
+          easting:          data.easting          ?? '',
+          altitude:         data.altitude         ?? '',
+          length:           data.length           ?? '',
+          width:            data.width            ?? '',
+          height:           data.height           ?? '',
+          numberOfSpans:    data.numberOfSpans    ?? '',
+          constructionYear: data.constructionYear ?? '',
+          remark:           data.remark           ?? '',
         });
       } catch {
-        setServerError('Failed to load bridge data');
+        setServerError('Failed to load this structure record');
       } finally {
         setFetchLoading(false);
       }
@@ -81,18 +89,21 @@ export default function BridgeForm() {
 
   const validate = () => {
     const errs = {};
-    if (!form.serialNumber.trim()) errs.serialNumber = 'Serial number is required';
-    if (!form.structureType)       errs.structureType = 'Structure type is required';
-    if (!form.section.trim())      errs.section = 'Section is required';
-    if (!form.chainage)            errs.chainage = 'Chainage is required';
-    else if (isNaN(Number(form.chainage))) errs.chainage = 'Must be a number';
-    if (form.northing      && isNaN(Number(form.northing)))      errs.northing = 'Must be a number';
-    if (form.easting       && isNaN(Number(form.easting)))       errs.easting = 'Must be a number';
-    if (form.altitude      && isNaN(Number(form.altitude)))      errs.altitude = 'Must be a number';
-    if (form.length        && isNaN(Number(form.length)))        errs.length = 'Must be a number';
-    if (form.width         && isNaN(Number(form.width)))         errs.width = 'Must be a number';
-    if (form.height        && isNaN(Number(form.height)))        errs.height = 'Must be a number';
-    if (form.numberOfSpans && isNaN(Number(form.numberOfSpans))) errs.numberOfSpans = 'Must be an integer';
+    if (!String(form.serialNumber).trim()) errs.serialNumber = 'Bridge ID is required';
+    if (!form.structureType)               errs.structureType = 'Material / structure type is required';
+    if (!String(form.section).trim())       errs.section = 'Region / location is required';
+    if (form.chainage === '')               errs.chainage = 'Chainage is required';
+    else if (isNaN(Number(form.chainage)))  errs.chainage = 'Must be a number';
+
+    for (const key of ['northing', 'easting', 'altitude', 'length', 'width', 'height', 'numberOfSpans']) {
+      if (form[key] !== '' && isNaN(Number(form[key]))) errs[key] = 'Must be a number';
+    }
+    if (form.constructionYear !== '' &&
+        (isNaN(Number(form.constructionYear)) ||
+         Number(form.constructionYear) < 1800 ||
+         Number(form.constructionYear) > new Date().getFullYear() + 5)) {
+      errs.constructionYear = 'Enter a valid year';
+    }
     return errs;
   };
 
@@ -111,132 +122,157 @@ export default function BridgeForm() {
         navigate(`/bridges/${data.id}`);
       }
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Failed to save bridge');
+      setServerError(err.response?.data?.message || 'Failed to save this structure');
     } finally {
       setLoading(false);
     }
   };
 
-  // Shared props forwarded to every Field instance
   const fp = { form, errors, onChange: handleChange };
 
-  if (fetchLoading) return <div className="loading-center"><div className="spinner" /><span>Loading bridge...</span></div>;
+  if (fetchLoading) {
+    return <div className="loading-center"><div className="spinner" /><span>Loading structure record…</span></div>;
+  }
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto' }}>
 
       <nav className="breadcrumb">
-        <Link to="/bridges">Bridges</Link>
-        <span className="sep">/</span>
-        <span className="current">{isEdit ? 'Edit Bridge' : 'Register Bridge'}</span>
+        <Link to="/bridges">Bridge Inventory</Link>
+        <span>/</span>
+        <span>{isEdit ? 'Edit structure' : 'Register structure'}</span>
       </nav>
+
+      <div className="page-header">
+        <div>
+          <h2>{isEdit ? 'Edit Structure Record' : 'Register New Structure'}</h2>
+          <p>Asset identity, geospatial position and structural geometry</p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit}>
         {serverError && (
-          <div className="alert alert-error"><MdErrorOutline />{serverError}</div>
+          <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
+            <FiAlertCircle size={15} />
+            <span style={{ flex: 1 }}>{serverError}</span>
+          </div>
         )}
 
-        {/* ── Bridge Identity ─────────────────────────────── */}
-        <div className="card" style={{ marginBottom: 20 }}>
+        {/* Identity */}
+        <div className="tile" style={{ marginBottom: 'var(--sp-4)' }}>
           <div className="card-header">
             <div>
-              <div className="card-title">Bridge Identity</div>
-              <div className="card-subtitle">Basic identification and classification</div>
+              <div className="card-title">Asset Identity</div>
+              <div className="card-subtitle">Identification and material classification</div>
             </div>
           </div>
           <div className="card-body">
             <div className="form-row">
-              <Field {...fp} name="serialNumber" label="Serial Number" required placeholder="e.g. BRG-001" />
+              <Field {...fp} name="serialNumber" label="Bridge ID" required mono placeholder="BRG-001" />
+              <Field {...fp} name="bridgeName" label="Bridge name" placeholder="Kafue River Crossing"
+                     hint="Optional descriptive name shown alongside the ID" />
+            </div>
+
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="structureType">
-                  Type of Structure<span className="required"> *</span>
+                  Material / structure type<span style={{ color: 'var(--accent-dark)' }}> *</span>
                 </label>
                 <select
-                  id="structureType" name="structureType"
-                  className="form-control"
-                  style={errors.structureType ? { borderColor: 'var(--danger)' } : {}}
+                  id="structureType" name="structureType" className="form-control"
+                  style={errors.structureType ? { borderColor: 'var(--poor)' } : undefined}
                   value={form.structureType} onChange={handleChange}
                 >
-                  <option value="">Select structure type...</option>
+                  <option value="">Select type…</option>
                   {structureTypes.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
-                {errors.structureType && <span className="form-error"><MdErrorOutline size={13} />{errors.structureType}</span>}
+                {errors.structureType && (
+                  <span className="form-error"><FiAlertCircle size={12} />{errors.structureType}</span>
+                )}
+              </div>
+              <Field {...fp} name="constructionYear" label="Year built" type="number" mono
+                     min="1800" max={new Date().getFullYear() + 5} placeholder="1998" />
+            </div>
+
+            <div className="form-row">
+              <Field {...fp} name="section" label="Region / location" required
+                     placeholder="T2 Great North Road" />
+              <Field {...fp} name="chainage" label="Chainage (km)" required type="number" mono
+                     step="0.001" placeholder="45.500" />
+            </div>
+          </div>
+        </div>
+
+        {/* Position */}
+        <div className="tile" style={{ marginBottom: 'var(--sp-4)' }}>
+          <div className="card-header">
+            <div>
+              <div className="card-title">Geospatial Position</div>
+              <div className="card-subtitle">
+                Decimal degrees — required for the structure to appear on the GIS tracking grid
               </div>
             </div>
-            <div className="form-row">
-              <Field {...fp} name="section"  label="Section / Route" required placeholder="e.g. A1 Northern Corridor" />
-              <Field {...fp} name="chainage" label="Chainage (Km)"    required type="number" step="0.001" placeholder="e.g. 42.500" />
+          </div>
+          <div className="card-body">
+            <div className="form-row-3">
+              <Field {...fp} name="northing" label="Northing / latitude" type="number" mono
+                     step="any" placeholder="-15.416389" />
+              <Field {...fp} name="easting" label="Easting / longitude" type="number" mono
+                     step="any" placeholder="28.282778" />
+              <Field {...fp} name="altitude" label="Altitude (m)" type="number" mono
+                     step="any" placeholder="1025.50" />
             </div>
           </div>
         </div>
 
-        {/* ── GPS Coordinates ─────────────────────────────── */}
-        <div className="card" style={{ marginBottom: 20 }}>
+        {/* Geometry */}
+        <div className="tile" style={{ marginBottom: 'var(--sp-4)' }}>
           <div className="card-header">
             <div>
-              <div className="card-title">GPS Coordinates</div>
-              <div className="card-subtitle">Location data for mapping (optional)</div>
+              <div className="card-title">Structural Geometry</div>
+              <div className="card-subtitle">Measurements in metres</div>
             </div>
           </div>
           <div className="card-body">
             <div className="form-row-3">
-              <Field {...fp} name="northing" label="Northing"     type="number" step="any" placeholder="e.g. 1234567.89" />
-              <Field {...fp} name="easting"  label="Easting"      type="number" step="any" placeholder="e.g. 987654.32"  />
-              <Field {...fp} name="altitude" label="Altitude (m)" type="number" step="any" placeholder="e.g. 1200.00"    />
-            </div>
-          </div>
-        </div>
-
-        {/* ── Physical Dimensions ─────────────────────────── */}
-        <div className="card" style={{ marginBottom: 20 }}>
-          <div className="card-header">
-            <div>
-              <div className="card-title">Physical Dimensions</div>
-              <div className="card-subtitle">Structural measurements in metres</div>
-            </div>
-          </div>
-          <div className="card-body">
-            <div className="form-row-3">
-              <Field {...fp} name="length" label="Length (m)" type="number" step="any" placeholder="e.g. 24.5" />
-              <Field {...fp} name="width"  label="Width (m)"  type="number" step="any" placeholder="e.g. 7.2"  />
-              <Field {...fp} name="height" label="Height (m)" type="number" step="any" placeholder="e.g. 3.8"  />
+              <Field {...fp} name="length" label="Length (m)" type="number" mono step="any" placeholder="85.00" />
+              <Field {...fp} name="width"  label="Deck width (m)" type="number" mono step="any" placeholder="9.50" />
+              <Field {...fp} name="height" label="Height (m)" type="number" mono step="any" placeholder="7.20" />
             </div>
             <div className="form-row">
-              <Field {...fp} name="numberOfSpans" label="Number of Spans" type="number" min="1" placeholder="e.g. 3" />
+              <Field {...fp} name="numberOfSpans" label="Number of spans" type="number" mono min="1" placeholder="5" />
               <div />
             </div>
           </div>
         </div>
 
-        {/* ── Remarks ─────────────────────────────────────── */}
-        <div className="card" style={{ marginBottom: 24 }}>
+        {/* Remarks */}
+        <div className="tile" style={{ marginBottom: 'var(--sp-5)' }}>
           <div className="card-header">
-            <div className="card-title">Remarks</div>
+            <div>
+              <div className="card-title">Engineering Remarks</div>
+              <div className="card-subtitle">Monitoring requirements, history or site constraints</div>
+            </div>
           </div>
           <div className="card-body">
             <div className="form-group" style={{ marginBottom: 0 }}>
               <textarea
-                name="remark"
-                className="form-control"
-                rows={4}
-                placeholder="Additional notes, historical context, or special conditions..."
-                value={form.remark}
-                onChange={handleChange}
+                name="remark" className="form-control" rows={4}
+                placeholder="Periodic scour monitoring required during wet season…"
+                value={form.remark} onChange={handleChange}
               />
             </div>
           </div>
         </div>
 
-        {/* ── Actions ─────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }} className="form-actions-row">
+        <div className="toolbar" style={{ justifyContent: 'flex-end' }}>
           <Link to={isEdit ? `/bridges/${id}` : '/bridges'} className="btn btn-secondary">
-            <MdArrowBack /> Cancel
+            <FiArrowLeft size={13} /> Cancel
           </Link>
           <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
             {loading
-              ? <><span className="spinner spinner-sm" /> Saving...</>
-              : <><MdSave /> {isEdit ? 'Update Bridge' : 'Register Bridge'}</>
-            }
+              ? <><span className="spinner spinner-sm" /> Saving…</>
+              : <><FiSave size={14} /> {isEdit ? 'Update structure' : 'Register structure'}</>}
           </button>
         </div>
       </form>

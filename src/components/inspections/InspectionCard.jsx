@@ -1,20 +1,19 @@
 import { Link } from 'react-router-dom';
-import { format, formatDistanceToNow } from 'date-fns';
-import { MdCheckCircle, MdWarning, MdEdit, MdDelete, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
+import { formatDistanceToNow } from 'date-fns';
+import {
+  FiCheckCircle, FiAlertTriangle, FiEdit2, FiTrash2,
+  FiTrendingUp, FiTrendingDown,
+} from 'react-icons/fi';
 import { ConditionBadge } from '../ui/Badge';
+import { fmtDate, fmtDateLong } from '../../utils/format';
 
-const safeDate = (d, fmt) => {
-  if (!d) return '—';
-  const dt = new Date(d);
-  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
-};
+const condClass = (s) => ({ GOOD: 'cond-good', FAIR: 'cond-fair', POOR: 'cond-poor' })[s] ?? '';
+
 const safeFromNow = (d) => {
   if (!d) return '';
   const dt = new Date(d);
   return isNaN(dt.getTime()) ? '' : formatDistanceToNow(dt, { addSuffix: true });
 };
-
-const condClass = (s) => ({ GOOD: 'card-good', FAIR: 'card-fair', POOR: 'card-poor' })[s] ?? '';
 
 export default function InspectionCard({
   inspection: ins,
@@ -34,91 +33,93 @@ export default function InspectionCard({
   );
 
   return (
-    <div className={`inspection-card ${condClass(ins.conditionStatus)} ${ins.isResolved ? 'resolved' : ''}`}>
+    <article className={`inspection-card ${condClass(ins.conditionStatus)}`}>
 
-      {/* ── Head ──────────────────────────────────────────── */}
       <div className="inspection-card-head">
-        <div className="inspection-card-meta">
-          <span className="inspection-card-date">
-            {safeDate(ins.inspectionDate, 'dd MMMM yyyy')}
-          </span>
-          <span className="inspection-card-inspector">— {ins.inspectorName}</span>
-          <ConditionBadge status={ins.conditionStatus} />
-
-          {changed && (
-            <span className={`condition-change ${improved ? 'improved' : 'worsened'}`}>
-              {improved ? <><MdTrendingUp size={12} /> Improved</> : <><MdTrendingDown size={12} /> Worsened</>}
-            </span>
-          )}
-          {isLatest && (
-            <span style={{ fontSize: 11, background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>
-              Latest
-            </span>
-          )}
+        <div style={{ minWidth: 0 }}>
+          <div className="inspection-card-date">{fmtDateLong(ins.inspectionDate)}</div>
+          <div className="inspection-card-inspector">Inspector: {ins.inspectorName}</div>
         </div>
 
-        <div className="inspection-card-actions no-print">
-          {hasDefect && !ins.isResolved && (
-            <button className="btn btn-success btn-sm" onClick={() => onResolve?.(ins.id)} disabled={resolving}>
-              {resolving ? '...' : <><MdCheckCircle size={14} /> Mark Resolved</>}
-            </button>
+        <div className="inspection-card-meta">
+          {isLatest && <span className="chip chip-accent">Latest</span>}
+          {changed && (
+            <span className={`condition-change ${improved ? 'improved' : 'worsened'}`}
+                  style={{ color: improved ? 'var(--good)' : 'var(--poor)' }}>
+              {improved ? <FiTrendingUp size={11} /> : <FiTrendingDown size={11} />}
+              {improved ? 'Improved' : 'Worsened'}
+            </span>
           )}
-          <Link to={`/bridges/${bridgeId}/inspections/${ins.id}/edit`} className="btn btn-ghost btn-sm btn-icon" title="Edit">
-            <MdEdit />
-          </Link>
-          {isAdmin && (
-            <button className="btn btn-danger btn-sm btn-icon" onClick={() => onDelete?.(ins.id)} title="Delete">
-              <MdDelete />
-            </button>
-          )}
+          <ConditionBadge status={ins.conditionStatus} />
         </div>
       </div>
 
-      {/* ── Body ──────────────────────────────────────────── */}
       <div className="inspection-card-body">
         <div className="inspection-field">
-          <dt>Defect Description</dt>
-          <dd>{ins.defectDescription || <em style={{ color: 'var(--text-light)' }}>No defects reported</em>}</dd>
+          <span className="label-tech">Defect description</span>
+          <p>{ins.defectDescription || <span className="muted">No defects reported</span>}</p>
         </div>
+
         <div className="inspection-field">
-          <dt>Remedy / Action</dt>
-          <dd>{ins.remedy || <em style={{ color: 'var(--text-light)' }}>No remedy specified</em>}</dd>
+          <span className="label-tech">Remedy / action</span>
+          <p>{ins.remedy || <span className="muted">No remedy specified</span>}</p>
         </div>
-        {ins.lastVisitDate && (
+
+        <div className="bd-grid-2col">
+          {ins.lastVisitDate && (
+            <div className="inspection-field">
+              <span className="label-tech">Previous site visit</span>
+              <p className="mono">{fmtDate(ins.lastVisitDate)}</p>
+            </div>
+          )}
           <div className="inspection-field">
-            <dt>Last Visit</dt>
-            <dd>{safeDate(ins.lastVisitDate, 'dd MMM yyyy')}</dd>
+            <span className="label-tech">Defect status</span>
+            <p>
+              {!hasDefect ? (
+                <span className="resolve-status resolved">
+                  <FiCheckCircle size={12} /> Clean — no defects
+                </span>
+              ) : ins.isResolved ? (
+                <span className="resolve-status resolved">
+                  <FiCheckCircle size={12} />
+                  Signed off{ins.resolvedAt ? ` ${fmtDate(ins.resolvedAt)}` : ''}
+                  {ins.resolvedBy ? ` by ${ins.resolvedBy}` : ''}
+                </span>
+              ) : (
+                <span className="resolve-status unresolved">
+                  <FiAlertTriangle size={12} /> Unresolved — action required
+                </span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {ins.user && (
+          <div className="muted" style={{
+            fontSize: 'var(--fs-micro)', marginTop: 'var(--sp-3)',
+            paddingTop: 'var(--sp-2)', borderTop: '1px solid var(--border)',
+          }}>
+            Recorded by {ins.user.firstName} {ins.user.lastName} · {safeFromNow(ins.createdAt)}
           </div>
         )}
-        <div className="inspection-field">
-          <dt>Defect Status</dt>
-          <dd>
-            {!hasDefect ? (
-              <span style={{ color: 'var(--success)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <MdCheckCircle size={14} /> Clean — no defects
-              </span>
-            ) : ins.isResolved ? (
-              <span className="resolve-status resolved">
-                <MdCheckCircle size={13} />
-                Resolved{ins.resolvedAt ? ` on ${safeDate(ins.resolvedAt, 'dd MMM yyyy')}` : ''}
-                {ins.resolvedBy ? ` by ${ins.resolvedBy}` : ''}
-              </span>
-            ) : (
-              <span className="resolve-status unresolved">
-                <MdWarning size={13} /> Unresolved — action required
-              </span>
-            )}
-          </dd>
-        </div>
       </div>
 
-      {/* ── Footer ────────────────────────────────────────── */}
-      {ins.user && (
-        <div style={{ marginTop: 10, fontSize: 12, color: 'var(--text-light)', borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-          Recorded by {ins.user.firstName} {ins.user.lastName}
-          {' · '}{safeFromNow(ins.createdAt)}
-        </div>
-      )}
-    </div>
+      <div className="inspection-card-actions no-print">
+        {hasDefect && !ins.isResolved && (
+          <button className="btn btn-outline-success btn-sm" onClick={() => onResolve?.(ins.id)} disabled={resolving}>
+            {resolving ? <span className="spinner spinner-sm" /> : <FiCheckCircle size={12} />}
+            Approve / sign off
+          </button>
+        )}
+        <Link to={`/bridges/${bridgeId}/inspections/${ins.id}/edit`} className="btn btn-ghost btn-sm">
+          <FiEdit2 size={12} /> Edit
+        </Link>
+        {isAdmin && (
+          <button className="btn btn-outline-danger btn-sm btn-icon" onClick={() => onDelete?.(ins.id)} title="Hard delete inspection">
+            <FiTrash2 size={12} />
+          </button>
+        )}
+      </div>
+    </article>
   );
 }

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FiAlertCircle, FiShield, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
-import { MdDomain } from 'react-icons/md';
-import { FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 
 const initial = {
   firstName: '', lastName: '', email: '',
@@ -49,36 +48,37 @@ export default function Register() {
 
   return (
     <div className="auth-page">
+      <div className="auth-bg" aria-hidden="true" />
 
-      {/* Animated background blobs */}
-      <div className="auth-bg" aria-hidden="true">
-        <div className="auth-blob auth-blob-1" />
-        <div className="auth-blob auth-blob-2" />
-        <div className="auth-blob auth-blob-3" />
-        <div className="auth-blob auth-blob-4" />
-      </div>
+      <div className="auth-card" style={{ maxWidth: 520 }}>
 
-      <div className="auth-card" style={{ maxWidth: 500 }}>
-
-        {/* Brand */}
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <MdDomain size={26} color="#fff" />
+          <div className="auth-logo-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.1" strokeLinecap="square">
+              <path d="M2 17h20" />
+              <path d="M2 17V9" />
+              <path d="M22 17V9" />
+              <path d="M2 12c5-4 15-4 20 0" />
+              <path d="M8 17v-3.2" />
+              <path d="M16 17v-3.2" />
+            </svg>
           </div>
           <div className="auth-logo-text">
             <h1>BMS</h1>
-            <p>Bridge Information System</p>
+            <p>Bridge Management System</p>
           </div>
         </div>
 
         <div className="auth-hr" />
 
-        <h2 className="auth-form-title">Create an account</h2>
-        <p className="auth-form-subtitle">Only administrators can create accounts</p>
+        <div className="auth-form-title">Request operator access</div>
+        <div className="auth-form-subtitle">
+          Accounts carry write access to structural records. Only create one with authorisation.
+        </div>
 
         {error && (
-          <div className="alert alert-error" style={{ marginBottom: 20 }}>
-            <FiAlertCircle size={16} />
+          <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
+            <FiAlertCircle size={15} />
             <span style={{ flex: 1 }}>{error}</span>
           </div>
         )}
@@ -87,81 +87,71 @@ export default function Register() {
 
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label" htmlFor="firstName">
-                First Name <span className="required">*</span>
-              </label>
+              <label className="form-label" htmlFor="firstName">First name</label>
               <input
                 id="firstName" name="firstName" className="form-control"
-                placeholder="John" value={form.firstName} onChange={handleChange}
+                autoComplete="given-name" placeholder="John"
+                value={form.firstName} onChange={handleChange}
               />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="lastName">
-                Last Name <span className="required">*</span>
-              </label>
+              <label className="form-label" htmlFor="lastName">Last name</label>
               <input
                 id="lastName" name="lastName" className="form-control"
-                placeholder="Doe" value={form.lastName} onChange={handleChange}
+                autoComplete="family-name" placeholder="Banda"
+                value={form.lastName} onChange={handleChange}
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="email">
-              Email Address <span className="required">*</span>
-            </label>
+            <label className="form-label" htmlFor="email">Email address</label>
             <input
               id="email" name="email" type="email" className="form-control"
-              placeholder="john.doe@example.com"
+              autoComplete="email" placeholder="j.banda@agency.gov"
               value={form.email} onChange={handleChange}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="role">Role</label>
+            <label className="form-label" htmlFor="role">Access role</label>
             <select id="role" name="role" className="form-control" value={form.role} onChange={handleChange}>
-              <option value="ENGINEER">Engineer</option>
-              <option value="ADMIN">Admin</option>
+              <option value="ENGINEER">Engineer — file inspections and maintenance</option>
+              <option value="ADMIN">Administrator — full access including deletion</option>
             </select>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label" htmlFor="password">
-                Password <span className="required">*</span>
-              </label>
+              <label className="form-label" htmlFor="password">Password</label>
               <input
                 id="password" name="password" type="password" className="form-control"
-                placeholder="Min 6 characters"
+                autoComplete="new-password" placeholder="Minimum 6 characters"
                 value={form.password} onChange={handleChange}
               />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="confirmPassword">
-                Confirm Password <span className="required">*</span>
-              </label>
+              <label className="form-label" htmlFor="confirmPassword">Confirm password</label>
               <input
                 id="confirmPassword" name="confirmPassword" type="password" className="form-control"
-                placeholder="Repeat password"
+                autoComplete="new-password" placeholder="Repeat password"
                 value={form.confirmPassword} onChange={handleChange}
               />
             </div>
           </div>
 
-          <div className="alert auth-card-info" style={{ fontSize: 13, marginBottom: 20 }}>
-            <FiCheckCircle size={15} />
-            <span>Ensure you have proper authorization before creating an account.</span>
+          <div className="alert alert-info" style={{ marginBottom: 'var(--sp-4)' }}>
+            <FiShield size={15} style={{ flexShrink: 0 }} />
+            <span>
+              Every create, update, resolution and deletion is written to the audit trail
+              against your account.
+            </span>
           </div>
 
-          <button
-            type="submit"
-            className="btn auth-submit-btn"
-            disabled={loading}
-          >
+          <button type="submit" className="btn auth-submit-btn" disabled={loading}>
             {loading
               ? <><span className="spinner spinner-sm" /> Creating account…</>
-              : 'Create account'
-            }
+              : <>Create account <FiArrowRight size={14} /></>}
           </button>
         </form>
 

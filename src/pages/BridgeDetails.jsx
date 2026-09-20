@@ -220,47 +220,50 @@ export default function BridgeDetails() {
         </div>
       )}
 
-      {/* Profile Header */}
-      <div className="bridge-profile-header">
-        <div className={`condition-band ${condClass(latestIns?.conditionStatus)}`} />
-        <div style={{ padding: '20px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: 24, fontWeight: 800 }}>{bridge.serialNumber}</h2>
-                {latestIns && <ConditionBadge status={latestIns.conditionStatus} />}
-                {unresolvedCount > 0 && (
-                  <span className="badge" style={{ background: '#fff7ed', color: '#ea580c' }}>
-                    {unresolvedCount} unresolved
-                  </span>
-                )}
-              </div>
-              <p style={{ color: 'var(--text-muted)', marginTop: 4, fontSize: 14 }}>
-                {bridge.structureType}
-                {bridge.section  && <> · <strong>{bridge.section}</strong></>}
-                {bridge.chainage && <> · Km {Number(bridge.chainage).toFixed(3)}</>}
-              </p>
-              <div style={{ display: 'flex', gap: 16, marginTop: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: 'var(--text-light)' }}>
-                  Registered {safeDate(bridge.createdAt, 'dd MMM yyyy')}
-                </span>
-                {latestIns ? (
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                    Last inspected: <strong>{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</strong>
-                    {' '}by {latestIns.inspectorName}
-                  </span>
-                ) : (
-                  <span style={{ fontSize: 12, color: 'var(--warning)', fontWeight: 600 }}>Not yet inspected</span>
-                )}
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} className="no-print bridge-profile-actions">
-              <button className="btn btn-ghost btn-sm" onClick={() => window.print()}><MdPrint /> Print</button>
-              <Link to={`/bridges/${id}/edit`} className="btn btn-secondary btn-sm"><MdEdit /> Edit</Link>
-              <Link to={`/bridges/${id}/inspections/new`} className="btn btn-primary btn-sm"><MdAdd /> Add Inspection</Link>
-              {isAdmin && <button className="btn btn-danger btn-sm" onClick={() => setDeleteModal(true)}><MdDelete /></button>}
-            </div>
+      {/* Profile Header — structural identity block */}
+      <div className={`bridge-profile-header ${condClass(latestIns?.conditionStatus)}`}>
+        <div style={{ minWidth: 0 }}>
+          <div className="command-strip-label">Structure profile</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
+            <h2>{bridge.serialNumber}</h2>
+            {latestIns && <ConditionBadge status={latestIns.conditionStatus} />}
+            {unresolvedCount > 0 && (
+              <span className="chip chip-accent">{unresolvedCount} open defect(s)</span>
+            )}
           </div>
+
+          <p>
+            {[
+              bridge.bridgeName,
+              bridge.structureType,
+              bridge.section,
+              bridge.chainage != null ? `Km ${Number(bridge.chainage).toFixed(3)}` : null,
+              bridge.constructionYear ? `Built ${bridge.constructionYear}` : null,
+            ].filter(Boolean).join('  ·  ')}
+          </p>
+
+          <div className="command-strip-meta" style={{ marginTop: 8 }}>
+            <span>REGISTERED: {safeDate(bridge.createdAt, 'dd MMM yyyy')}</span>
+            <span className="sep">│</span>
+            {latestIns ? (
+              <span>
+                LAST INSPECTION: {safeDate(latestIns.inspectionDate, 'dd MMM yyyy')} · {latestIns.inspectorName}
+              </span>
+            ) : (
+              <span style={{ color: 'var(--accent)' }}>NEVER INSPECTED</span>
+            )}
+          </div>
+        </div>
+
+        <div className="toolbar no-print bridge-profile-actions" style={{ flexShrink: 0 }}>
+          <button className="btn-strip" onClick={() => window.print()}><MdPrint size={13} /> Print</button>
+          <Link to={`/bridges/${id}/edit`} className="btn btn-secondary btn-sm"><MdEdit size={13} /> Edit</Link>
+          <Link to={`/bridges/${id}/inspections/new`} className="btn btn-primary btn-sm"><MdAdd size={13} /> File inspection</Link>
+          {isAdmin && (
+            <button className="btn btn-outline-danger btn-sm btn-icon" title="Hard delete structure" onClick={() => setDeleteModal(true)}>
+              <MdDelete size={14} />
+            </button>
+          )}
         </div>
       </div>
 

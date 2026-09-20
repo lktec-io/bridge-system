@@ -1,0 +1,128 @@
+/* ============================================================
+   BASE — reset, technical typography, focus, scrollbars
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  line-height: var(--lh-base);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-numeric: tabular-nums;
+  overflow-x: hidden;
+}
+
+/* ── Headings — tight, technical, never oversized ─────────── */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-strong);
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -.01em;
+}
+h1 { font-size: var(--fs-xl); }
+h2 { font-size: var(--fs-lg); }
+h3 { font-size: var(--fs-md); }
+h4 { font-size: var(--fs-base); }
+h5, h6 { font-size: var(--fs-sm); }
+
+p { line-height: var(--lh-base); }
+
+/* ── Links — structural, underline on intent ──────────────── */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 550;
+  transition: color var(--transition);
+}
+a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 2px; }
+
+[data-theme="dark"] a:hover { color: var(--accent); }
+
+/* ── Data / measurement typography ────────────────────────── */
+.mono,
+.metric,
+.coord,
+.measure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+
+/* Uppercase technical label */
+.label-tech {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--track-micro);
+  color: var(--text-muted);
+}
+
+.muted      { color: var(--text-muted); }
+.text-strong { color: var(--text-strong); }
+.nowrap     { white-space: nowrap; }
+
+/* Truncate long engineering text without overlapping */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Form element inheritance ─────────────────────────────── */
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+textarea { resize: vertical; }
+
+img, svg { display: block; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; }
+
+/* ── Focus — visible orange ring, no default outlines ─────── */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+::selection { background: rgba(249, 115, 22, .22); color: var(--text-strong); }
+
+/* ── Scrollbars — thin and industrial ─────────────────────── */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: var(--bg-sunken); }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 0;
+  border: 2px solid var(--bg-sunken);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) var(--bg-sunken); }
+
+/* ── Motion preference ────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

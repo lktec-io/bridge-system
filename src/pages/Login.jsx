@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff } from 'react-icons/fi';
-import { MdDomain } from 'react-icons/md';
+import { FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff, FiArrowRight } from 'react-icons/fi';
 
 export default function Login() {
   const { login } = useAuth();
@@ -26,7 +25,7 @@ export default function Login() {
       await login(form.email, form.password);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Sign in failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -34,21 +33,20 @@ export default function Login() {
 
   return (
     <div className="auth-page">
+      <div className="auth-bg" aria-hidden="true" />
 
-      {/* Animated blobs */}
-      <div className="auth-bg" aria-hidden="true">
-        <div className="auth-blob auth-blob-1" />
-        <div className="auth-blob auth-blob-2" />
-        <div className="auth-blob auth-blob-3" />
-        <div className="auth-blob auth-blob-4" />
-      </div>
+      <div className="auth-card">
 
-      <div className="auth-card login-card">
-
-        {/* Brand */}
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            <MdDomain size={32} color="#fff" />
+          <div className="auth-logo-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.1" strokeLinecap="square">
+              <path d="M2 17h20" />
+              <path d="M2 17V9" />
+              <path d="M22 17V9" />
+              <path d="M2 12c5-4 15-4 20 0" />
+              <path d="M8 17v-3.2" />
+              <path d="M16 17v-3.2" />
+            </svg>
           </div>
           <div className="auth-logo-text">
             <h1>BMS</h1>
@@ -58,9 +56,14 @@ export default function Login() {
 
         <div className="auth-hr" />
 
+        <div className="auth-form-title">Operator sign in</div>
+        <div className="auth-form-subtitle">
+          Authorised personnel only. All actions are recorded in the audit trail.
+        </div>
+
         {error && (
-          <div className="alert alert-error" style={{ marginBottom: 20 }}>
-            <FiAlertCircle size={16} />
+          <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
+            <FiAlertCircle size={15} />
             <span style={{ flex: 1 }}>{error}</span>
           </div>
         )}
@@ -70,12 +73,12 @@ export default function Login() {
           <div className="form-group">
             <label className="form-label" htmlFor="email">Email address</label>
             <div className="input-wrap">
-              <FiMail className="input-leading-icon" size={15} />
+              <FiMail className="input-leading-icon" size={14} />
               <input
                 id="email" name="email" type="email"
                 autoComplete="email" className="form-control"
-                style={{ paddingLeft: 40 }}
-                placeholder="you@example.com"
+                style={{ paddingLeft: 36 }}
+                placeholder="operator@agency.gov"
                 value={form.email} onChange={handleChange}
               />
             </div>
@@ -84,12 +87,12 @@ export default function Login() {
           <div className="form-group">
             <label className="form-label" htmlFor="password">Password</label>
             <div className="input-wrap">
-              <FiLock className="input-leading-icon" size={15} />
+              <FiLock className="input-leading-icon" size={14} />
               <input
                 id="password" name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password" className="form-control"
-                style={{ paddingLeft: 40, paddingRight: 44 }}
+                style={{ paddingLeft: 36, paddingRight: 40 }}
                 placeholder="••••••••"
                 value={form.password} onChange={handleChange}
               />
@@ -99,7 +102,7 @@ export default function Login() {
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showPassword ? <FiEyeOff size={15} /> : <FiEye size={15} />}
+                {showPassword ? <FiEyeOff size={14} /> : <FiEye size={14} />}
               </button>
             </div>
           </div>
@@ -110,23 +113,21 @@ export default function Login() {
                 type="checkbox" name="remember"
                 checked={form.remember} onChange={handleChange}
               />
-              <span>Remember me</span>
+              <span>Remember this terminal</span>
             </label>
             <button type="button" className="forgot-link">Forgot password?</button>
           </div>
 
-          <button
-            type="submit"
-            className="btn auth-submit-btn"
-            disabled={loading}
-          >
+          <button type="submit" className="btn auth-submit-btn" disabled={loading}>
             {loading
-              ? <><span className="spinner spinner-sm" /> Signing in…</>
-              : 'Sign in'
-            }
+              ? <><span className="spinner spinner-sm" /> Authenticating…</>
+              : <>Sign in <FiArrowRight size={14} /></>}
           </button>
-
         </form>
+
+        <div className="auth-footer">
+          Need an operator account? <Link to="/register">Request access</Link>
+        </div>
       </div>
     </div>
   );

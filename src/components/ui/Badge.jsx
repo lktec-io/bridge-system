@@ -9,23 +9,26 @@ const ROLE_MAP = {
   ENGINEER: 'badge-engineer',
 };
 
+/** Condition rating chip. An absent rating is stated, never implied as healthy. */
 export function ConditionBadge({ status }) {
-  if (!status) return <span className="badge" style={{ background: '#f8fafc', color: 'var(--text-light)' }}>Not inspected</span>;
-  return <span className={`badge ${CONDITION_MAP[status] ?? ''}`}>{status}</span>;
+  if (!status || status === 'UNINSPECTED') {
+    return <span className="badge badge-none">Uninspected</span>;
+  }
+  return <span className={`badge ${CONDITION_MAP[status] ?? 'badge-none'}`}>{status}</span>;
 }
 
 export function RoleBadge({ role }) {
-  return <span className={`badge ${ROLE_MAP[role] ?? ''}`}>{role}</span>;
+  return <span className={`badge ${ROLE_MAP[role] ?? 'badge-none'}`}>{role}</span>;
 }
 
 export default function Badge({ children, variant = 'default', className = '', style = {} }) {
   const variantClass = {
-    default: '',
-    good:    'badge-good',
-    fair:    'badge-fair',
-    poor:    'badge-poor',
-    admin:   'badge-admin',
-    engineer:'badge-engineer',
+    default:  'badge-none',
+    good:     'badge-good',
+    fair:     'badge-fair',
+    poor:     'badge-poor',
+    admin:    'badge-admin',
+    engineer: 'badge-engineer',
   }[variant] ?? '';
 
   return (

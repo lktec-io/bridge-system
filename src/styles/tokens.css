@@ -1,0 +1,207 @@
+/* ============================================================
+   DESIGN TOKENS — Structural Infrastructure Terminal
+   ------------------------------------------------------------
+   Palette rules:
+     • Deep navy / slate  → structural surfaces, high contrast
+     • Safety orange      → primary actions, critical alerts, tracking
+     • Clean background greys + charcoal text for reading
+   Shape rule:
+     • Border radius NEVER exceeds 6px (structural, not rounded)
+   ============================================================ */
+:root {
+  /* ── Structural navy scale ───────────────────────────────── */
+  --navy-950:  #080E1A;
+  --navy-900:  #0F172A;   /* dominant structural colour */
+  --navy-800:  #16233B;
+  --navy-700:  #1E293B;
+  --navy-600:  #283A54;
+
+  /* ── Slate / grey scale ──────────────────────────────────── */
+  --slate-500: #64748B;
+  --slate-400: #94A3B8;
+  --slate-300: #CBD5E1;
+  --slate-200: #E2E8F0;
+  --slate-100: #F1F5F9;
+  --slate-50:  #F8FAFC;
+
+  /* ── Safety / industrial orange (strategic use only) ─────── */
+  --accent:        #F97316;
+  --accent-dark:   #EA580C;
+  --accent-darker: #C2410C;
+  --accent-light:  #FFF1E7;
+  --accent-border: #FDBA8C;
+
+  /* ── Brand (structural navy — links, emphasis, active nav) ─ */
+  --primary:       #0F172A;
+  --primary-dark:  #080E1A;
+  --primary-light: #E2E8F0;
+
+  /* ── Condition / status semantics ────────────────────────── */
+  --good:          #15803D;
+  --good-light:    #DCFCE7;
+  --good-pin:      #16A34A;   /* map pin: SAFE */
+  --fair:          #B45309;
+  --fair-light:    #FEF3C7;
+  --fair-pin:      #EAB308;   /* map pin: NEEDS INSPECTION */
+  --poor:          #B91C1C;
+  --poor-light:    #FEE2E2;
+  --poor-pin:      #DC2626;   /* map pin: CRITICAL */
+  --none:          #64748B;
+  --none-light:    #F1F5F9;
+  --none-pin:      #94A3B8;
+
+  /* Aliases kept for existing markup */
+  --success:       var(--good);
+  --success-light: var(--good-light);
+  --warning:       var(--fair);
+  --warning-light: var(--fair-light);
+  --danger:        var(--poor);
+  --danger-light:  var(--poor-light);
+  --info:          #0E7490;
+  --info-light:    #E0F2FE;
+  --secondary:     var(--slate-500);
+
+  /* ── Surfaces ────────────────────────────────────────────── */
+  --bg:          #F8FAFC;
+  --bg-card:     #FFFFFF;
+  --bg-sunken:   #F1F5F9;
+  --bg-inset:    #EEF2F7;
+  --bg-structure: var(--navy-900);
+
+  /* ── Lines ───────────────────────────────────────────────── */
+  --border:        #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-focus:  var(--accent);
+  --grid-line:     rgba(15, 23, 42, .06);
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --text:          #334155;   /* sharp charcoal body text */
+  --text-strong:   #0F172A;
+  --text-muted:    #64748B;
+  --text-light:    #94A3B8;
+  --text-on-dark:  #E2E8F0;
+
+  /* ── Sidebar (structural dark rail) ──────────────────────── */
+  --sidebar-bg:      var(--navy-900);
+  --sidebar-rail:    var(--navy-950);
+  --sidebar-hover:   rgba(255, 255, 255, .06);
+  --sidebar-active:  rgba(249, 115, 22, .14);
+  --sidebar-text:    rgba(226, 232, 240, .62);
+  --sidebar-divider: rgba(255, 255, 255, .07);
+
+  /* ── Layout dimensions ───────────────────────────────────── */
+  --sidebar-w: 248px;
+  --header-h:  60px;
+  --gutter:    20px;
+
+  /* ── Shape — structural, minimal radius (max 6px) ────────── */
+  --radius-sm: 2px;
+  --radius:    4px;
+  --radius-lg: 6px;
+  --radius-pill: 3px;   /* deliberately NOT a pill — kept square */
+
+  /* ── Elevation — tight and technical, never puffy ────────── */
+  --shadow:    0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-md: 0 2px 6px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-lg: 0 8px 24px rgba(15, 23, 42, .12), 0 2px 6px rgba(15, 23, 42, .07);
+  --ring:      0 0 0 3px rgba(249, 115, 22, .22);
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --font:      'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  --fs-micro: 10.5px;
+  --fs-xs:    11.5px;
+  --fs-sm:    12.5px;
+  --fs-base:  13.5px;
+  --fs-md:    15px;
+  --fs-lg:    17px;
+  --fs-xl:    21px;
+  --fs-metric: 26px;
+
+  --lh-tight: 1.2;
+  --lh-base:  1.5;
+
+  /* Uppercase technical labels */
+  --track-label: .08em;
+  --track-micro: .12em;
+
+  /* ── Spacing scale ───────────────────────────────────────── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* ── Motion — short and mechanical ───────────────────────── */
+  --transition:      120ms cubic-bezier(.4, 0, .2, 1);
+  --transition-slow: 220ms cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ============================================================
+   DARK MODE — deep structural navy, same orange accent
+   ============================================================ */
+[data-theme="dark"] {
+  --primary:       #E2E8F0;
+  --primary-dark:  #FFFFFF;
+  --primary-light: rgba(226, 232, 240, .12);
+
+  --good:          #4ADE80;
+  --good-light:    rgba(74, 222, 128, .13);
+  --fair:          #FBBF24;
+  --fair-light:    rgba(251, 191, 36, .13);
+  --poor:          #F87171;
+  --poor-light:    rgba(248, 113, 113, .13);
+  --none:          #94A3B8;
+  --none-light:    rgba(148, 163, 184, .12);
+
+  --info:          #22D3EE;
+  --info-light:    rgba(34, 211, 238, .13);
+  --secondary:     #94A3B8;
+
+  --accent:        #FB8534;
+  --accent-dark:   #F97316;
+  --accent-darker: #EA580C;
+  --accent-light:  rgba(249, 115, 22, .15);
+  --accent-border: rgba(249, 115, 22, .45);
+
+  --bg:          #0B1220;
+  --bg-card:     #111C2E;
+  --bg-sunken:   #0E1728;
+  --bg-inset:    #16233B;
+  --bg-structure: #080E1A;
+
+  --border:        #1E2E45;
+  --border-strong: #2C405C;
+  --grid-line:     rgba(226, 232, 240, .07);
+
+  --text:          #CBD5E1;
+  --text-strong:   #F1F5F9;
+  --text-muted:    #8CA3BC;
+  --text-light:    #5E7794;
+
+  --sidebar-bg:      #080E1A;
+  --sidebar-rail:    #05090F;
+  --sidebar-hover:   rgba(255, 255, 255, .05);
+  --sidebar-active:  rgba(249, 115, 22, .16);
+  --sidebar-text:    rgba(203, 213, 225, .58);
+  --sidebar-divider: rgba(255, 255, 255, .06);
+
+  --shadow:    0 1px 2px rgba(0, 0, 0, .5);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, .55), 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, .65), 0 2px 8px rgba(0, 0, 0, .45);
+  --ring:      0 0 0 3px rgba(249, 115, 22, .3);
+}
+
+/* Brief cross-fade while the theme switches */
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color .22s ease,
+    border-color     .22s ease,
+    color            .14s ease,
+    box-shadow       .22s ease !important;
+}

@@ -198,20 +198,85 @@ CREATE TABLE IF NOT EXISTS history_logs (
   COMMENT='Full audit trail — every create, update, and resolution event';
 
 -- ── notifications ─────────────────────────────────────────────────
+--  IMPORTANT: this definition MUST match server/services/notificationService.js,
+--  which also issues CREATE TABLE IF NOT EXISTS for these two tables at boot.
+--
+--  The model is a SYSTEM-WIDE event feed plus a per-user read marker — not a
+--  per-user row. A notification is written once and every operator sees it;
+--  notification_reads records who has dismissed what.
+--
+--  Previous versions of this file declared a per-user `notifications` table
+--  (user_id + is_read). That shape is NOT what the API queries: because both
+--  this file and the service use IF NOT EXISTS, the mismatch produced a table
+--  the application could not read, and the resulting errors were swallowed by
+--  empty catch blocks — notifications silently never appeared.
 CREATE TABLE IF NOT EXISTS notifications (
-  id          INT UNSIGNED                              NOT NULL AUTO_INCREMENT,
-  user_id     INT UNSIGNED                              NOT NULL,
-  title       VARCHAR(255)                              NOT NULL,
-  message     TEXT                                      NOT NULL,
-  type        ENUM('INFO','WARNING','ALERT','REMINDER')  NOT NULL DEFAULT 'INFO',
-  is_read     TINYINT(1)                                NOT NULL DEFAULT 0,
-  created_at  TIMESTAMP                                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  type        VARCHAR(60)   NOT NULL
+              COMMENT 'Domain event, e.g. INSPECTION_POOR, SENSOR_THRESHOLD, BRIDGE_CREATED',
+  title       VARCHAR(255)  NOT NULL,
+  message     TEXT          DEFAULT NULL,
+  entity_type VARCHAR(30)   DEFAULT NULL COMMENT 'Subject type, e.g. bridge',
+  entity_id   INT           DEFAULT NULL COMMENT 'Subject id — intentionally not an FK, events outlive rows',
+  created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_notif_user_read  (user_id, is_read),
-  KEY idx_notif_created    (created_at DESC),
-  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  KEY idx_notif_created (created_at DESC),
+  KEY idx_notif_type    (type),
+  KEY idx_notif_entity  (entity_type, entity_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='User notifications — inspection reminders and system alerts';
+  COMMENT='System-wide event feed — inspection, maintenance and sensor signals';
+
+CREATE TABLE IF NOT EXISTS notification_reads (
+  user_id         INT UNSIGNED NOT NULL,
+  notification_id INT UNSIGNED NOT NULL,
+  read_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id, notification_id),
+  KEY idx_nread_notification (notification_id),
+  CONSTRAINT fk_nread_user         FOREIGN KEY (user_id)         REFERENCES users(id)         ON DELETE CASCADE,
+  CONSTRAINT fk_nread_notification FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Per-operator read markers against the shared notification feed';
+
+-- ── sensor devices / telemetry ─────────────────────────────────────
+--  Also shipped as server/database/migrations/001_sensor_telemetry.sql
+--  for existing databases. Kept here so a fresh install is complete.
+CREATE TABLE IF NOT EXISTS sensor_devices (
+  id              INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  bridge_id       INT UNSIGNED  NOT NULL,
+  device_code     VARCHAR(60)   NOT NULL,
+  sensor_type     ENUM('TILT','VIBRATION','STRAIN','DISPLACEMENT',
+                       'TEMPERATURE','WATER_LEVEL','CRACK_WIDTH') NOT NULL,
+  unit            VARCHAR(20)   DEFAULT NULL,
+  location_note   VARCHAR(255)  DEFAULT NULL,
+  warn_threshold  DECIMAL(12,4) DEFAULT NULL,
+  alarm_threshold DECIMAL(12,4) DEFAULT NULL,
+  is_active       TINYINT(1)    NOT NULL DEFAULT 1,
+  installed_at    DATE          DEFAULT NULL,
+  last_seen_at    DATETIME      DEFAULT NULL,
+  created_at      TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_sensor_device_code (device_code),
+  KEY        idx_sensor_bridge      (bridge_id),
+  KEY        idx_sensor_type        (sensor_type),
+  KEY        idx_sensor_active      (is_active),
+  CONSTRAINT fk_sensor_bridge FOREIGN KEY (bridge_id) REFERENCES bridges(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Structural monitoring devices attached to bridges';
+
+CREATE TABLE IF NOT EXISTS sensor_readings (
+  id             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  device_id      INT UNSIGNED    NOT NULL,
+  reading_value  DECIMAL(12,4)   NOT NULL,
+  status         ENUM('OK','WARN','ALARM') NOT NULL DEFAULT 'OK',
+  recorded_at    DATETIME        NOT NULL,
+  created_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_reading_device_time (device_id, recorded_at DESC),
+  KEY idx_reading_time        (recorded_at DESC),
+  KEY idx_reading_status_time (status, recorded_at DESC),
+  CONSTRAINT fk_reading_device FOREIGN KEY (device_id) REFERENCES sensor_devices(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Raw sensor telemetry — high volume, append only. See migration 001 for retention.';
 
 
 -- ══════════════════════════════════════════════════════════════════
@@ -446,16 +511,17 @@ INSERT INTO history_logs (bridge_id, user_id, action_type, old_values, new_value
   (6, 2, 'INSPECTION_ADDED', '{}', '{"conditionStatus":"GOOD","inspectionDate":"2026-01-10"}');
 
 -- ── Notifications ──────────────────────────────────────────────────
-INSERT INTO notifications (user_id, title, message, type, is_read) VALUES
-  (2, 'Inspection Required — BRG-003',
+--  Shared event feed: no user_id. Read state lives in notification_reads.
+INSERT INTO notifications (type, title, message, entity_type, entity_id) VALUES
+  ('INSPECTION_POOR', 'Critical inspection result',
    'Luangwa Valley Bridge (BRG-003) was last inspected on 2024-06-20 and is rated POOR. Urgent reinspection required.',
-   'ALERT', 0),
-  (3, 'Routine Inspection Overdue — BRG-005',
+   'bridge', 3),
+  ('MAINTENANCE_LOGGED', 'Maintenance in progress',
    'Mumbwa Road Culvert (BRG-005) maintenance is currently IN PROGRESS. Please update status after site visit.',
-   'REMINDER', 0),
-  (1, 'Rehabilitation Tender Ready',
+   'bridge', 5),
+  ('BRIDGE_CREATED', 'Rehabilitation tender ready',
    'BRG-003 rehabilitation planned for 2026-03-01. Confirm contractor engagement with Strutek Engineering.',
-   'INFO', 0);
+   'bridge', 3);
 
 
 -- ══════════════════════════════════════════════════════════════════

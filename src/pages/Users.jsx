@@ -197,15 +197,15 @@ export default function Users() {
       )}
 
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <FiUsers size={22} style={{ color: 'var(--primary)' }} />
-          <div>
-            <h2>System Users</h2>
-            <p>{users.length} user(s) registered</p>
-          </div>
+        <div>
+          <h2>System Administration</h2>
+          <p>
+            {users.length} operator account(s) ·{' '}
+            {users.filter((u) => u.role === 'ADMIN').length} administrator(s)
+          </p>
         </div>
         <button className="btn btn-primary btn-sm" onClick={openAdd}>
-          <FiUserPlus size={15} /> Add User
+          <FiUserPlus size={14} /> Add operator
         </button>
       </div>
 
@@ -222,15 +222,21 @@ export default function Users() {
       ) : (
         <>
           {/* ── Desktop table ─────────────────────────────── */}
-          <div className="table-wrapper users-desktop-table">
+          <div className="ops-panel users-desktop-table">
+            <div className="ops-head">
+              <span className="ops-title">
+                <FiUsers size={14} /> Operator Accounts
+                <span className="ops-count">{users.length}</span>
+              </span>
+            </div>
             <table className="table">
               <thead>
                 <tr>
-                  <th>User</th>
+                  <th>Operator</th>
                   <th>Email</th>
-                  <th>Role</th>
+                  <th>Access Role</th>
                   <th>Registered</th>
-                  <th style={{ textAlign: 'center' }}>Actions</th>
+                  <th style={{ textAlign: 'right' }}>Operations</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,7 +255,7 @@ export default function Users() {
                     </td>
                     <td className="muted">{u.email}</td>
                     <td><RoleBadge role={u.role} /></td>
-                    <td className="muted">{safeDate(u.createdAt, 'dd MMM yyyy')}</td>
+                    <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>{safeDate(u.createdAt, 'dd MMM yyyy')}</td>
                     <td>
                       <div className="users-action-group">
                         <button className="btn btn-ghost btn-sm btn-icon" title="Edit user" onClick={() => openEdit(u)}>
@@ -260,8 +266,8 @@ export default function Users() {
                         </button>
                         {u.id !== currentUser?.id && (
                           <button
-                            className="btn btn-danger btn-sm btn-icon"
-                            title="Delete user"
+                            className="btn btn-outline-danger btn-sm btn-icon"
+                            title="Hard delete operator account"
                             onClick={() => setDeleteTarget({ id: u.id, name: `${u.firstName} ${u.lastName}` })}
                           >
                             <FiTrash2 size={14} />

@@ -1,208 +1,235 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import {
+  FiRefreshCw, FiMapPin, FiCalendar, FiUser, FiExternalLink, FiAlertTriangle,
+} from 'react-icons/fi';
 import { bridgesAPI } from '../api/bridges';
-import { format } from 'date-fns';
-import { FiRefreshCw, FiMapPin, FiCalendar, FiUser, FiExternalLink } from 'react-icons/fi';
 import { ConditionBadge } from '../components/ui/Badge';
+import { fmtDate } from '../utils/format';
 import 'leaflet/dist/leaflet.css';
 
-const safeDate = (d) => {
-  if (!d) return null;
-  const dt = new Date(d);
-  return isNaN(dt.getTime()) ? null : format(dt, 'dd MMM yyyy');
-};
-
-const COND_COLOR = {
-  GOOD:        '#10b981',
-  FAIR:        '#f59e0b',
-  POOR:        '#ef4444',
-  UNINSPECTED: '#94a3b8',
+const PIN = {
+  GOOD:        '#16A34A',
+  FAIR:        '#EAB308',
+  POOR:        '#DC2626',
+  UNINSPECTED: '#94A3B8',
 };
 
 const LEGEND = [
-  { label: 'Good',        color: '#10b981' },
-  { label: 'Fair',        color: '#f59e0b' },
-  { label: 'Poor',        color: '#ef4444' },
-  { label: 'Uninspected', color: '#94a3b8' },
+  { key: 'GOOD', cls: 'safe',     label: 'Safe' },
+  { key: 'FAIR', cls: 'watch',    label: 'Needs inspection' },
+  { key: 'POOR', cls: 'critical', label: 'Critical' },
+  { key: 'UNINSPECTED', cls: 'unknown', label: 'Uninspected' },
 ];
+
+const conditionOf = (b) => b.inspections?.[0]?.conditionStatus ?? 'UNINSPECTED';
+
+function FitToPins({ points }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    if (points.length === 1) map.setView(points[0], 12);
+    else map.fitBounds(points, { padding: [30, 30], maxZoom: 13 });
+  }, [points, map]);
+  return null;
+}
 
 export default function MapView() {
   const [bridges, setBridges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [filter,  setFilter]  = useState('');
 
-  const fetch = async () => {
+  const load = async () => {
     setLoading(true); setError('');
     try {
       const { data } = await bridgesAPI.getAll();
       setBridges(Array.isArray(data) ? data : (data.bridges ?? []));
     } catch {
-      setError('Failed to load bridge data');
+      setError('Failed to load structure positions');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetch(); }, []);
+  useEffect(() => { load(); }, []);
 
-  const withCoords = bridges.filter(b => b.northing && b.easting);
-  const center = withCoords.length > 0
-    ? [Number(withCoords[0].northing), Number(withCoords[0].easting)]
-    : [0, 35]; // default: Africa centre
+  const located = bridges.filter((b) => b.northing && b.easting);
+  const shown   = filter ? located.filter((b) => conditionOf(b) === filter) : located;
+  const points  = shown.map((b) => [Number(b.northing), Number(b.easting)]);
 
-  const condOf = (b) => b.inspections?.[0]?.conditionStatus ?? 'UNINSPECTED';
+  const counts = bridges.reduce((acc, b) => {
+    const c = conditionOf(b);
+    acc[c] = (acc[c] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-      {/* Header */}
+    <div>
       <div className="page-header">
         <div>
-          <h2>Bridge Map</h2>
+          <h2>GIS Bridge Map</h2>
           <p>
-            {withCoords.length} of {bridges.length} bridge(s) have GPS coordinates
+            {loading
+              ? 'Loading…'
+              : `${located.length} of ${bridges.length} structure(s) carry GPS coordinates`}
           </p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={fetch} disabled={loading}>
+        <button className="btn btn-ghost btn-sm no-print" onClick={load} disabled={loading}>
           <FiRefreshCw size={13} /> Refresh
         </button>
       </div>
 
-      {/* Legend */}
-      <div className="map-legend-bar">
+      {/* Legend acts as a condition filter */}
+      <div className="map-legend-bar" style={{ marginBottom: 'var(--sp-3)' }}>
         <FiMapPin size={13} style={{ color: 'var(--text-muted)' }} />
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>Condition:</span>
-        {LEGEND.map(({ label, color }) => (
-          <span key={label} className="map-legend-item">
-            <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
-            {label}
+        <span className="label-tech">Condition</span>
+        <div className="seg">
+          <button className={`seg-btn${filter === '' ? ' active' : ''}`} onClick={() => setFilter('')}>
+            All ({located.length})
+          </button>
+          {LEGEND.map(({ key, label }) => (
+            <button
+              key={key}
+              className={`seg-btn${filter === key ? ' active' : ''}`}
+              onClick={() => setFilter(key)}
+            >
+              {label} ({counts[key] ?? 0})
+            </button>
+          ))}
+        </div>
+        <span className="toolbar-spacer" />
+        {LEGEND.map(({ key, cls, label }) => (
+          <span key={key} className="gis-legend-item">
+            <span className={`gis-pin ${cls}`} /> {label}
           </span>
         ))}
       </div>
 
-      {/* Map */}
-      <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
-        {loading ? (
-          <div className="loading-center" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
-            <div className="spinner" />
-            <span>Loading bridge locations…</span>
-          </div>
-        ) : error ? (
-          <div className="empty-state" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
-            <p>{error}</p>
-            <button className="btn btn-primary btn-sm" onClick={fetch}>Retry</button>
-          </div>
-        ) : withCoords.length === 0 ? (
-          <div className="empty-state" style={{ height: 'clamp(280px, 45vh, 480px)' }}>
-            <FiMapPin size={40} style={{ opacity: .3 }} />
-            <h3>No GPS data available</h3>
-            <p>Add northing and easting coordinates to bridge records to display them on the map.</p>
-          </div>
-        ) : (
-          <MapContainer
-            center={center}
-            zoom={10}
-            style={{ height: 'clamp(340px, 55vh, 580px)', width: '100%' }}
-            scrollWheelZoom
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution="&copy; OpenStreetMap contributors"
-            />
-            {withCoords.map((b) => {
-              const cond  = condOf(b);
-              const color = COND_COLOR[cond] ?? COND_COLOR.UNINSPECTED;
-              return (
-                <CircleMarker
-                  key={b.id}
-                  center={[Number(b.northing), Number(b.easting)]}
-                  radius={10}
-                  pathOptions={{
-                    color:       color,
-                    fillColor:   color,
-                    fillOpacity: 0.88,
-                    weight:      2,
-                  }}
-                >
-                  <Popup minWidth={210} maxWidth={280}>
-                    <div className="map-popup">
-                      <div className="map-popup-header">
-                        <span className="map-popup-serial">{b.serialNumber}</span>
-                        <ConditionBadge status={cond} />
-                      </div>
-                      {b.section && (
-                        <div className="map-popup-row">
-                          <FiMapPin size={11} />
-                          <span>{b.section}{b.chainage ? ` — Km ${Number(b.chainage).toFixed(3)}` : ''}</span>
+      {/* Viewport */}
+      <div className="gis-hub" style={{ marginBottom: 'var(--sp-4)' }}>
+        <div className="gis-viewport" style={{ height: 'clamp(340px, 58vh, 620px)' }}>
+          {loading ? (
+            <div className="loading-center" style={{ height: '100%' }}>
+              <div className="spinner" /><span>Acquiring positions…</span>
+            </div>
+          ) : error ? (
+            <div className="empty-state" style={{ height: '100%' }}>
+              <FiAlertTriangle />
+              <h3>Position data unavailable</h3>
+              <p>{error}</p>
+              <button className="btn btn-primary btn-sm" onClick={load}>Retry</button>
+            </div>
+          ) : shown.length === 0 ? (
+            <div className="empty-state" style={{ height: '100%' }}>
+              <FiMapPin />
+              <h3>{located.length === 0 ? 'No GPS data recorded' : 'No structures in this condition'}</h3>
+              <p>
+                {located.length === 0
+                  ? 'Add northing and easting values to structure records to plot them here.'
+                  : 'Clear the condition filter to see the full network.'}
+              </p>
+              {located.length > 0 && (
+                <button className="btn btn-secondary btn-sm" onClick={() => setFilter('')}>Show all</button>
+              )}
+            </div>
+          ) : (
+            <MapContainer center={points[0]} zoom={10} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <FitToPins points={points} />
+              {shown.map((b) => {
+                const cond  = conditionOf(b);
+                const color = PIN[cond] ?? PIN.UNINSPECTED;
+                const ins   = b.inspections?.[0];
+                return (
+                  <CircleMarker
+                    key={b.id}
+                    center={[Number(b.northing), Number(b.easting)]}
+                    radius={cond === 'POOR' ? 11 : 9}
+                    pathOptions={{ color, fillColor: color, fillOpacity: .85, weight: 2 }}
+                  >
+                    <Popup minWidth={210}>
+                      <div className="map-popup">
+                        <div className="map-popup-header">
+                          <span className="map-popup-serial">{b.serialNumber}</span>
+                          <ConditionBadge status={cond} />
                         </div>
-                      )}
-                      {b.inspections?.[0] && (
-                        <>
-                          {safeDate(b.inspections[0].inspectionDate) && (
-                            <div className="map-popup-row">
-                              <FiCalendar size={11} />
-                              <span>{safeDate(b.inspections[0].inspectionDate)}</span>
-                            </div>
-                          )}
-                          {b.inspections[0].inspectorName && (
-                            <div className="map-popup-row">
-                              <FiUser size={11} />
-                              <span>{b.inspections[0].inspectorName}</span>
-                            </div>
-                          )}
-                        </>
-                      )}
-                      <Link to={`/bridges/${b.id}`} className="map-popup-link">
-                        <FiExternalLink size={11} /> View Bridge Profile
-                      </Link>
-                    </div>
-                  </Popup>
-                </CircleMarker>
-              );
-            })}
-          </MapContainer>
-        )}
+                        {b.section && (
+                          <div className="map-popup-row">
+                            <FiMapPin size={11} />
+                            <span>
+                              {b.section}
+                              {b.chainage != null ? ` — Km ${Number(b.chainage).toFixed(3)}` : ''}
+                            </span>
+                          </div>
+                        )}
+                        {ins?.inspectionDate && (
+                          <div className="map-popup-row">
+                            <FiCalendar size={11} /><span>{fmtDate(ins.inspectionDate)}</span>
+                          </div>
+                        )}
+                        {ins?.inspectorName && (
+                          <div className="map-popup-row">
+                            <FiUser size={11} /><span>{ins.inspectorName}</span>
+                          </div>
+                        )}
+                        <Link to={`/bridges/${b.id}`} className="map-popup-link">
+                          <FiExternalLink size={11} /> Open structure profile
+                        </Link>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                );
+              })}
+            </MapContainer>
+          )}
+        </div>
       </div>
 
-      {/* Bridge list below map */}
-      {withCoords.length > 0 && (
-        <div className="card">
-          <div className="card-header">
-            <div className="card-title">Bridges on Map</div>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{withCoords.length} located</span>
+      {/* Coordinate register */}
+      {shown.length > 0 && (
+        <section className="ops-panel">
+          <div className="ops-head">
+            <span className="ops-title">
+              <FiMapPin size={14} /> Coordinate Register
+              <span className="ops-count">{shown.length}</span>
+            </span>
           </div>
-          <div className="table-wrapper map-table-wrapper">
-            <table className="table table-compact">
+          <div className="ops-scroll">
+            <table className="table table-compact ops-table">
               <thead>
                 <tr>
-                  <th>Serial No.</th>
-                  <th>Section</th>
-                  <th>Chainage</th>
+                  <th>Bridge ID</th>
+                  <th>Region / Location</th>
+                  <th className="num">Chainage</th>
                   <th>Condition</th>
-                  <th>Coordinates</th>
+                  <th className="num">Northing</th>
+                  <th className="num">Easting</th>
+                  <th className="num">Altitude</th>
                 </tr>
               </thead>
               <tbody>
-                {withCoords.map((b) => (
-                  <tr key={b.id}>
+                {shown.map((b) => (
+                  <tr key={b.id} className={conditionOf(b) === 'POOR' ? 'row-poor' : ''}>
                     <td>
-                      <Link to={`/bridges/${b.id}`} style={{ color: 'var(--primary)', fontWeight: 700 }}>
-                        {b.serialNumber}
-                      </Link>
+                      <Link to={`/bridges/${b.id}`} className="serial-link">{b.serialNumber}</Link>
                     </td>
                     <td className="muted">{b.section ?? '—'}</td>
-                    <td className="muted">{b.chainage ? `Km ${Number(b.chainage).toFixed(3)}` : '—'}</td>
-                    <td><ConditionBadge status={condOf(b)} /></td>
-                    <td className="muted" style={{ fontSize: 12 }}>
-                      N {Number(b.northing).toFixed(5)}, E {Number(b.easting).toFixed(5)}
-                    </td>
+                    <td className="num">{b.chainage != null ? `Km ${Number(b.chainage).toFixed(3)}` : '—'}</td>
+                    <td><ConditionBadge status={conditionOf(b)} /></td>
+                    <td className="num coord">{Number(b.northing).toFixed(6)}</td>
+                    <td className="num coord">{Number(b.easting).toFixed(6)}</td>
+                    <td className="num coord">{b.altitude != null ? `${Number(b.altitude).toFixed(2)} m` : '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

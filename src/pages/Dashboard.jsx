@@ -1,41 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { bridgesAPI } from '../api/bridges';
-import { format } from 'date-fns';
 import {
-  FiLayers, FiActivity, FiCheckCircle, FiAlertCircle,
-  FiAlertTriangle, FiAlertOctagon, FiArrowRight, FiRefreshCw, FiPlus,
+  FiDatabase, FiAlertTriangle, FiClipboard, FiActivity, FiRefreshCw,
+  FiArrowRight, FiTool, FiCpu, FiAlertOctagon,
 } from 'react-icons/fi';
-import { MdWarning, MdReportProblem } from 'react-icons/md';
+import { bridgesAPI, inspectionsAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
-import StatsCard      from '../components/dashboard/StatsCard';
+import KpiBlock       from '../components/dashboard/KpiBlock';
+import GisHub         from '../components/dashboard/GisHub';
+import OpsTable       from '../components/dashboard/OpsTable';
 import PieChart       from '../components/dashboard/PieChart';
 import RecentActivity from '../components/dashboard/RecentActivity';
-import { ConditionBadge } from '../components/ui/Badge';
+import ConfirmDialog  from '../components/ui/ConfirmDialog';
+import { fmtDateTime } from '../utils/format';
 
-const safeDate = (d, fmt) => {
-  if (!d) return '—';
-  const dt = new Date(d);
-  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
-};
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good Morning';
-  if (h < 17) return 'Good Afternoon';
-  return 'Good Evening';
-}
-
-function getHeroDay() {
-  return new Date().toLocaleDateString('en-US', { weekday: 'long' });
-}
-
-function getHeroDate() {
-  return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-// ── Trend bar chart ───────────────────────────────────────────
-function TrendChart({ data }) {
+/* Inspection throughput bars — last 6 months. */
+function TrendChart({ data = [] }) {
   const max = Math.max(...data.map((d) => d.count), 1);
   return (
     <div className="trend-chart">
@@ -44,7 +24,7 @@ function TrendChart({ data }) {
           <div className="trend-bar-wrap">
             <div
               className="trend-bar-inner"
-              style={{ height: `${Math.round((count / max) * 100)}%` }}
+              style={{ height: `${Math.max(Math.round((count / max) * 100), count > 0 ? 4 : 1)}%` }}
               title={`${count} inspection(s)`}
             />
           </div>
@@ -56,303 +36,326 @@ function TrendChart({ data }) {
   );
 }
 
-// ── Dashboard skeleton ────────────────────────────────────────
+function healthTone(index) {
+  if (index === null || index === undefined) return 'neutral';
+  if (index >= 80) return 'good';
+  if (index >= 55) return 'fair';
+  return 'critical';
+}
+
 function DashboardSkeleton() {
   return (
-    <div className="dashboard-skeleton">
-      {/* Hero skeleton */}
-      <div className="skel" style={{ height: 120, borderRadius: 16, marginBottom: 20 }} />
-      {/* 6 stat cards */}
-      <div className="stats-grid-6" style={{ marginBottom: 20 }}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="stat-card" style={{ padding: 20 }}>
-            <div className="skel skel-circle" style={{ width: 40, height: 40, marginBottom: 12 }} />
-            <div className="skel" style={{ height: 28, width: '60%', marginBottom: 8 }} />
-            <div className="skel skel-text" style={{ width: '80%' }} />
+    <div>
+      <div className="skel" style={{ height: 66, marginBottom: 16 }} />
+      <div className="kpi-grid">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="kpi-block">
+            <div className="skel skel-text" style={{ width: '55%' }} />
+            <div className="skel" style={{ height: 26, width: '40%' }} />
+            <div className="skel skel-text" style={{ width: '70%', marginBottom: 0 }} />
           </div>
         ))}
       </div>
-      {/* Middle row */}
-      <div className="dashboard-panels" style={{ marginBottom: 20 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div className="card" style={{ height: 240 }}>
-            <div style={{ padding: 20 }}>
-              <div className="skel skel-title" />
-              <div className="skel skel-card" style={{ height: 160 }} />
-            </div>
-          </div>
-          <div className="card" style={{ height: 180 }}>
-            <div style={{ padding: 20 }}>
-              <div className="skel skel-title" />
-              <div className="skel skel-card" style={{ height: 100 }} />
-            </div>
-          </div>
-        </div>
-        <div className="card" style={{ height: 440 }}>
-          <div style={{ padding: 20 }}>
-            <div className="skel skel-title" />
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 14, alignItems: 'center' }}>
-                <div className="skel skel-circle" style={{ width: 32, height: 32, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div className="skel skel-text" style={{ width: '70%', marginBottom: 4 }} />
-                  <div className="skel skel-text" style={{ width: '45%' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="gis-grid">
+        <div className="tile"><div className="skel" style={{ height: 380 }} /></div>
+        <div className="tile"><div className="skel" style={{ height: 380 }} /></div>
       </div>
-      {/* Table skeleton */}
-      <div className="card">
-        <div style={{ padding: 20 }}>
-          <div className="skel skel-title" />
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skel" style={{ height: 40, marginBottom: 8, borderRadius: 6 }} />
-          ))}
-        </div>
-      </div>
+      <div className="ops-panel"><div className="skel" style={{ height: 220 }} /></div>
     </div>
   );
 }
 
-// ── Dashboard ─────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
+
   const [stats,   setStats]   = useState(null);
+  const [bridges, setBridges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  const [mapError, setMapError] = useState('');
 
-  const fetchStats = async () => {
-    setLoading(true); setError('');
+  const [busyId,    setBusyId]    = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting,  setDeleting]  = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    setMapError('');
+
+    /* The two calls are independent: a failure to load positions must not
+       blank the KPI strip, and vice versa. */
+    const [statsRes, bridgeRes] = await Promise.allSettled([
+      bridgesAPI.getDashboard(),
+      bridgesAPI.getAll(),
+    ]);
+
+    if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+    else setError('Unable to load monitoring metrics');
+
+    if (bridgeRes.status === 'fulfilled') {
+      const data = bridgeRes.value.data;
+      setBridges(Array.isArray(data) ? data : (data.bridges ?? []));
+    } else {
+      setMapError('Unable to load asset positions');
+    }
+
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  // ── Approve (resolve) an open defect ───────────────────────
+  const approve = async (ins) => {
+    setBusyId(ins.id);
+    setActionError('');
     try {
-      const { data } = await bridgesAPI.getDashboard();
-      setStats(data);
-    } catch { setError('Failed to load dashboard data'); }
-    finally  { setLoading(false); }
+      await inspectionsAPI.resolve(ins.id, `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim());
+      setStats((prev) => prev && {
+        ...prev,
+        recentInspections: prev.recentInspections.map((r) =>
+          r.id === ins.id ? { ...r, isResolved: true } : r
+        ),
+      });
+      load();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Could not approve this inspection');
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  useEffect(() => { fetchStats(); }, []);
+  // ── Hard delete an inspection record ───────────────────────
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    setActionError('');
+    try {
+      await inspectionsAPI.delete(pendingDelete.id);
+      setStats((prev) => prev && {
+        ...prev,
+        recentInspections: prev.recentInspections.filter((r) => r.id !== pendingDelete.id),
+      });
+      setPendingDelete(null);
+      load();
+    } catch (err) {
+      setActionError(err.response?.data?.message || 'Could not delete this inspection');
+      setPendingDelete(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading && !stats) return <DashboardSkeleton />;
 
-  if (error) return (
-    <div className="empty-state">
-      <FiAlertOctagon style={{ fontSize: 48, opacity: .4 }} />
-      <h3>Dashboard unavailable</h3>
-      <p>{error}</p>
-      <button className="btn btn-primary btn-sm" onClick={fetchStats}>
-        <FiRefreshCw size={14} /> Retry
-      </button>
-    </div>
-  );
+  if (error && !stats) {
+    return (
+      <div className="empty-state">
+        <FiAlertOctagon />
+        <h3>Monitoring data unavailable</h3>
+        <p>{error}</p>
+        <button className="btn btn-primary btn-sm" onClick={load}>
+          <FiRefreshCw size={13} /> Retry
+        </button>
+      </div>
+    );
+  }
 
   const {
-    totalBridges, recentlyInspected, unresolvedDefects,
-    conditionCounts, recentActivity, inspectionTrend, poorBridges, recentInspections,
-  } = stats;
+    totalBridges = 0, conditionCounts = {}, healthIndex, coverage = {},
+    quarter = {}, criticalAlerts = {}, inspectionTrend = [], recentActivity = [],
+    recentInspections = [], maintenance = {}, sensors = {}, generatedAt,
+  } = stats ?? {};
 
   return (
     <div>
 
-      {/* ── Premium hero ─────────────────────────────── */}
-      <div className="hero-premium">
-        {/* Animated light layers */}
-        <div className="hero-lights" aria-hidden="true">
-          <div className="hero-streak hs1" />
-          <div className="hero-streak hs2" />
-          <div className="hero-streak hs3" />
-          <div className="hero-particle hp1" />
-          <div className="hero-particle hp2" />
-          <div className="hero-particle hp3" />
-          <div className="hero-particle hp4" />
-          <div className="hero-glow hg1" />
-          <div className="hero-glow hg2" />
-          <div className="hero-glow hg3" />
-        </div>
-
-        <div className="hero-content">
-          <div className="hero-left">
-            <div className="hero-label">WELCOME BACK</div>
-            <div className="hero-name">{user?.firstName}</div>
-          </div>
-          <div className="hero-right">
-            <div className="hero-greeting">{getGreeting()}</div>
-            <div className="hero-date-day">{getHeroDay()}</div>
-            <div className="hero-date-full">{getHeroDate()}</div>
+      {/* ── Command strip ──────────────────────────────── */}
+      <div className="command-strip">
+        <div className="command-strip-left">
+          <div className="command-strip-label">Bridge Management System</div>
+          <div className="command-strip-title">Structural Command Overview</div>
+          <div className="command-strip-meta">
+            <span>OPERATOR: {user?.firstName} {user?.lastName}</span>
+            <span className="sep">│</span>
+            <span>ROLE: {user?.role}</span>
+            <span className="sep">│</span>
+            <span>SYNC: {generatedAt ? fmtDateTime(generatedAt) : '—'}</span>
           </div>
         </div>
-
-        <button className="btn hero-refresh-btn" onClick={fetchStats} title="Refresh dashboard">
-          <FiRefreshCw size={14} />
-        </button>
+        <div className="command-strip-right no-print">
+          <button className="btn-strip" onClick={load} disabled={loading}>
+            <FiRefreshCw size={12} /> {loading ? 'Syncing…' : 'Resync'}
+          </button>
+          <Link to="/bridges/new" className="btn btn-primary btn-sm">
+            Register structure
+          </Link>
+        </div>
       </div>
 
-      {/* ── Urgency banner ──────────────────────────────── */}
-      {(conditionCounts.POOR ?? 0) > 0 && (
+      {actionError && (
+        <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
+          <FiAlertOctagon size={15} />
+          <span style={{ flex: 1 }}>{actionError}</span>
+          <button className="btn-close" onClick={() => setActionError('')}>×</button>
+        </div>
+      )}
+
+      {/* ── Critical banner ───────────────────────────── */}
+      {criticalAlerts.total > 0 && (
         <div className="urgency-banner no-print">
           <div className="urgency-banner-icon">
-            <MdReportProblem size={26} color="var(--danger)" />
+            <FiAlertTriangle size={18} style={{ color: 'var(--accent-darker)' }} />
           </div>
-          <div style={{ flex: 1 }}>
-            <h4>{conditionCounts.POOR} bridge(s) in POOR condition require urgent attention</h4>
-            <p>{unresolvedDefects} unresolved defect record(s) across all bridges.</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h4>{criticalAlerts.total} critical maintenance alert(s) require attention</h4>
+            <p>
+              {criticalAlerts.poorCondition} structure(s) rated POOR ·{' '}
+              {criticalAlerts.overdueInspections} overdue inspection(s) ·{' '}
+              {criticalAlerts.emergencyMaintenance} emergency work order(s) ·{' '}
+              {criticalAlerts.sensorAlarms} sensor alarm(s)
+            </p>
           </div>
-          <Link to="/bridges?condition=POOR" className="btn btn-danger btn-sm no-print" style={{ flexShrink: 0 }}>
-            View Now <FiArrowRight size={13} />
+          <Link to="/alerts" className="btn btn-primary btn-sm" style={{ flexShrink: 0 }}>
+            Open alerts <FiArrowRight size={12} />
           </Link>
         </div>
       )}
 
-      {/* ── 6 stat cards ────────────────────────────────── */}
-      <div className="stats-grid-6">
-        <StatsCard icon={FiLayers}       value={totalBridges}              label="Total Bridges"       color="blue"   />
-        <StatsCard icon={FiActivity}     value={recentlyInspected}         label="Inspected (30 days)" color="teal"   />
-        <StatsCard icon={FiCheckCircle}  value={conditionCounts.GOOD ?? 0} label="Good Condition"      color="green"  />
-        <StatsCard icon={FiAlertCircle}  value={conditionCounts.FAIR ?? 0} label="Fair Condition"      color="amber"  />
-        <StatsCard icon={FiAlertTriangle}value={conditionCounts.POOR ?? 0} label="Poor Condition"      color="red"    />
-        <StatsCard icon={FiAlertOctagon} value={unresolvedDefects}         label="Unresolved Defects"  color="orange" />
+      {/* ── SECTION A — top level metrics ─────────────── */}
+      <div className="kpi-grid">
+        <KpiBlock
+          label="Total Monitored Bridges"
+          value={totalBridges}
+          icon={FiDatabase}
+          note={`${coverage.inspected ?? 0} inspected · ${conditionCounts.UNINSPECTED ?? 0} pending`}
+          total={totalBridges}
+          split={[
+            { tone: 'good', value: conditionCounts.GOOD ?? 0,        label: 'Good' },
+            { tone: 'fair', value: conditionCounts.FAIR ?? 0,        label: 'Fair' },
+            { tone: 'poor', value: conditionCounts.POOR ?? 0,        label: 'Poor' },
+            { tone: 'none', value: conditionCounts.UNINSPECTED ?? 0, label: 'Uninspected' },
+          ]}
+        />
+
+        <KpiBlock
+          label="Critical Maintenance Alerts"
+          value={criticalAlerts.total ?? 0}
+          icon={FiAlertTriangle}
+          tone={criticalAlerts.total > 0 ? 'critical' : 'good'}
+          note={`${criticalAlerts.poorCondition ?? 0} poor · ${criticalAlerts.overdueInspections ?? 0} overdue`}
+        />
+
+        <KpiBlock
+          label="Inspected This Quarter"
+          value={quarter.inspections ?? 0}
+          icon={FiClipboard}
+          tone="accent"
+          note={`${quarter.bridgesInspected ?? 0} distinct structure(s)`}
+          delta={quarter.delta}
+          deltaLabel="vs last quarter"
+        />
+
+        <KpiBlock
+          label="Overall Structural Health Index"
+          value={healthIndex ?? '—'}
+          unit={healthIndex != null ? '%' : undefined}
+          icon={FiActivity}
+          tone={healthTone(healthIndex)}
+          meter={healthIndex}
+          meterTone={healthTone(healthIndex)}
+          note={healthIndex != null
+            ? `Weighted across ${coverage.pct ?? 0}% of portfolio`
+            : 'No inspections recorded yet'}
+        />
       </div>
 
-      {/* ── Middle row ──────────────────────────────────── */}
-      <div className="dashboard-panels">
+      {/* ── SECTION B — GIS / digital twin hub ────────── */}
+      <GisHub
+        bridges={bridges}
+        loading={loading}
+        error={mapError}
+        onRetry={load}
+        healthIndex={healthIndex}
+      />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* ── SECTION C — data operations ───────────────── */}
+      <OpsTable
+        rows={recentInspections}
+        isAdmin={isAdmin}
+        onApprove={approve}
+        onDelete={setPendingDelete}
+        busyId={busyId}
+      />
+
+      {/* ── Supporting analytics ──────────────────────── */}
+      <div className="dashboard-panels">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)', minWidth: 0 }}>
           <PieChart counts={conditionCounts} total={totalBridges} />
 
-          <div className="card">
+          <div className="tile">
             <div className="card-header">
-              <div className="card-title">Inspection Trend</div>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Last 6 months</span>
+              <div>
+                <div className="card-title">Inspection Throughput</div>
+                <div className="card-subtitle">Records filed per month, last 6 months</div>
+              </div>
             </div>
             <div className="card-body">
               <TrendChart data={inspectionTrend} />
             </div>
+          </div>
+
+          {/* Module status — shows honestly when a module has no data yet */}
+          <div className="tile">
+            <div className="card-header">
+              <span className="card-title">Module Status</span>
+            </div>
+            <div className="gis-stat-list">
+              <div className="gis-stat-row">
+                <span className="k"><FiTool size={12} /> Maintenance work orders open</span>
+                <span className="v">{maintenance.available === false ? 'n/a' : (maintenance.open ?? 0)}</span>
+              </div>
+              <div className="gis-stat-row">
+                <span className="k"><FiTool size={12} /> Emergency orders active</span>
+                <span className="v">{maintenance.available === false ? 'n/a' : (maintenance.emergencyOpen ?? 0)}</span>
+              </div>
+              <div className="gis-stat-row">
+                <span className="k"><FiCpu size={12} /> Sensor devices registered</span>
+                <span className="v">{sensors.available === false ? 'n/a' : (sensors.deviceCount ?? 0)}</span>
+              </div>
+              <div className="gis-stat-row">
+                <span className="k"><FiCpu size={12} /> Sensors in alarm</span>
+                <span className="v">{sensors.available === false ? 'n/a' : (sensors.byStatus?.ALARM ?? 0)}</span>
+              </div>
+            </div>
+            {(maintenance.available === false || sensors.available === false) && (
+              <div className="card-body" style={{ paddingTop: 0 }}>
+                <p className="muted" style={{ fontSize: 'var(--fs-xs)' }}>
+                  A module reporting <span className="mono">n/a</span> has no database tables yet —
+                  apply <span className="mono">server/database/migrations/</span> to enable it.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         <RecentActivity logs={recentActivity} />
       </div>
 
-      {/* ── Recent inspections ──────────────────────────── */}
-      <div className="card" style={{ marginBottom: 24 }}>
-        <div className="card-header">
-          <div>
-            <div className="card-title">Latest Inspections</div>
-            <div className="card-subtitle">Most recently recorded inspection activities</div>
-          </div>
-          <Link to="/inspections" className="btn btn-ghost btn-sm no-print">
-            All Inspections <FiArrowRight size={13} />
-          </Link>
-        </div>
-        {recentInspections.length === 0 ? (
-          <div className="empty-state" style={{ padding: '40px 24px' }}>
-            <p>No inspections recorded yet.</p>
-            <Link to="/bridges" className="btn btn-primary btn-sm">
-              <FiPlus size={14} /> Start Inspecting
-            </Link>
-          </div>
-        ) : (
-          <div className="table-compact">
-            <table className="table dashboard-inspections-table">
-              <thead>
-                <tr>
-                  <th>Bridge</th>
-                  <th>Section</th>
-                  <th>Inspector</th>
-                  <th>Date</th>
-                  <th>Condition</th>
-                  <th style={{ textAlign: 'center' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentInspections.map((ins) => (
-                  <tr key={ins.id} className={ins.conditionStatus === 'POOR' ? 'row-poor' : ''}>
-                    <td>
-                      <Link to={`/bridges/${ins.bridgeId}`} style={{ color: 'var(--primary)', fontWeight: 700 }}>
-                        {ins.bridge?.serialNumber}
-                      </Link>
-                    </td>
-                    <td className="muted">{ins.bridge?.section}</td>
-                    <td>{ins.inspectorName}</td>
-                    <td className="muted">{safeDate(ins.inspectionDate, 'dd MMM yyyy')}</td>
-                    <td><ConditionBadge status={ins.conditionStatus} /></td>
-                    <td style={{ textAlign: 'center' }}>
-                      <Link to={`/bridges/${ins.bridgeId}`} className="btn btn-ghost btn-sm no-print">View</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* ── Poor bridges ────────────────────────────────── */}
-      {poorBridges.length > 0 && (
-        <div className="card">
-          <div className="card-header" style={{ background: 'var(--danger-light)' }}>
-            <div>
-              <div className="card-title" style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <MdWarning size={18} /> Bridges Requiring Urgent Attention
-              </div>
-              <div className="card-subtitle">
-                Latest inspection status: POOR — immediate maintenance required
-              </div>
-            </div>
-            <Link to="/bridges?condition=POOR" className="btn btn-danger btn-sm no-print">
-              View All <FiArrowRight size={13} />
-            </Link>
-          </div>
-          <div className="table-compact">
-            <table className="table dashboard-poor-table">
-              <thead>
-                <tr>
-                  <th>Serial No.</th>
-                  <th>Section</th>
-                  <th>Last Inspected</th>
-                  <th>Inspector</th>
-                  <th>Defect Summary</th>
-                  <th style={{ textAlign: 'center' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {poorBridges.map((b) => {
-                  const ins = b.inspections[0];
-                  return (
-                    <tr key={b.id} className="row-poor">
-                      <td>
-                        <Link to={`/bridges/${b.id}`} style={{ color: 'var(--danger)', fontWeight: 700 }}>
-                          {b.serialNumber}
-                        </Link>
-                      </td>
-                      <td>{b.section}</td>
-                      <td className="muted">
-                        {ins ? safeDate(ins.inspectionDate, 'dd MMM yyyy') : '—'}
-                      </td>
-                      <td>{ins?.inspectorName ?? '—'}</td>
-                      <td style={{ fontSize: 12, maxWidth: 220, color: 'var(--text-muted)' }}>
-                        {ins?.defectDescription
-                          ? ins.defectDescription.length > 80
-                            ? `${ins.defectDescription.slice(0, 80)}…`
-                            : ins.defectDescription
-                          : 'No description provided'
-                        }
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <Link to={`/bridges/${b.id}/inspections/new`} className="btn btn-primary btn-sm no-print">
-                          <FiPlus size={13} /> Inspect
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        onClose={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+        title="Hard delete inspection"
+        message={
+          pendingDelete
+            ? `Permanently delete the ${pendingDelete.conditionStatus} inspection dated ${new Date(pendingDelete.inspectionDate).toLocaleDateString()} for ${pendingDelete.bridge?.serialNumber ?? 'this structure'}? This removes the record from the database and cannot be undone.`
+            : ''
+        }
+        confirmLabel="Hard delete"
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -1,20 +1,25 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import {
+  FiPlus, FiRefreshCw, FiAlertOctagon, FiDatabase, FiGrid, FiList,
+} from 'react-icons/fi';
 import { bridgesAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
-import { MdAdd, MdAccountBalance, MdRefresh, MdErrorOutline, MdClose } from 'react-icons/md';
-import BridgeSearch from '../components/bridges/BridgeSearch';
-import BridgeTable  from '../components/bridges/BridgeTable';
+import BridgeSearch  from '../components/bridges/BridgeSearch';
+import BridgeTable   from '../components/bridges/BridgeTable';
+import BridgeCard    from '../components/bridges/BridgeCard';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 export default function BridgesList() {
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
+
   const [bridges,     setBridges]     = useState([]);
   const [loading,     setLoading]     = useState(true);
   const [deleteId,    setDeleteId]    = useState(null);
   const [deleting,    setDeleting]    = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [view,        setView]        = useState('table');
 
   const [search,     setSearch]     = useState(searchParams.get('search')     || '');
   const [condition,  setCondition]  = useState(searchParams.get('condition')  || '');
@@ -25,14 +30,17 @@ export default function BridgesList() {
     setLoading(true);
     try {
       const { data } = await bridgesAPI.getAll(params);
-      setBridges(data);
-    } catch { setBridges([]); }
-    finally { setLoading(false); }
+      setBridges(Array.isArray(data) ? data : (data.bridges ?? []));
+    } catch {
+      setBridges([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     fetchBridges({ search, condition, dateFilter, sortBy });
-  }, []); // eslint-disable-line
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFilterChange = (key, value) => {
     if (key === 'search')     setSearch(value);
@@ -63,8 +71,12 @@ export default function BridgesList() {
       await bridgesAPI.delete(deleteId);
       setBridges((prev) => prev.filter((b) => b.id !== deleteId));
       setDeleteId(null);
-    } catch { setDeleteError('Failed to delete bridge. Please try again.'); setDeleteId(null); }
-    finally { setDeleting(false); }
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || 'Failed to delete this structure. Please try again.');
+      setDeleteId(null);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const activeFilters = [search, condition, dateFilter].filter(Boolean).length;
@@ -72,25 +84,46 @@ export default function BridgesList() {
   return (
     <div>
       {deleteError && (
-        <div className="alert alert-error" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <MdErrorOutline />
+        <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
+          <FiAlertOctagon size={15} />
           <span style={{ flex: 1 }}>{deleteError}</span>
-          <button className="btn-close" onClick={() => setDeleteError('')}><MdClose size={18} /></button>
+          <button className="btn-close" onClick={() => setDeleteError('')}>×</button>
         </div>
       )}
+
       <div className="page-header">
         <div>
-          <h2>Bridge Registry</h2>
+          <h2>Bridge Inventory</h2>
           <p>
-            {loading ? 'Loading...' : `${bridges.length} bridge(s) found`}
+            {loading ? 'Loading…' : `${bridges.length} structure(s) in scope`}
             {activeFilters > 0 && (
-              <span style={{ marginLeft: 8, fontSize: 12, background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>
+              <span className="chip chip-accent" style={{ marginLeft: 8 }}>
                 {activeFilters} filter(s) active
               </span>
             )}
           </p>
         </div>
-        <Link to="/bridges/new" className="btn btn-primary"><MdAdd /> Register Bridge</Link>
+        <div className="toolbar no-print">
+          <div className="seg">
+            <button
+              className={`seg-btn${view === 'table' ? ' active' : ''}`}
+              onClick={() => setView('table')}
+              title="Table view"
+            >
+              <FiList size={12} /> Table
+            </button>
+            <button
+              className={`seg-btn${view === 'grid' ? ' active' : ''}`}
+              onClick={() => setView('grid')}
+              title="Card view"
+            >
+              <FiGrid size={12} /> Cards
+            </button>
+          </div>
+          <Link to="/bridges/new" className="btn btn-primary btn-sm">
+            <FiPlus size={13} /> Register structure
+          </Link>
+        </div>
       </div>
 
       <BridgeSearch
@@ -104,30 +137,49 @@ export default function BridgesList() {
       />
 
       {loading ? (
-        <div className="loading-center"><div className="spinner" /><span>Loading bridges...</span></div>
+        <div className="loading-center">
+          <div className="spinner" />
+          <span>Loading inventory…</span>
+        </div>
       ) : bridges.length === 0 ? (
-        <div className="card">
-          <div className="empty-state" style={{ padding: '60px 24px' }}>
-            <MdAccountBalance />
-            <h3>No bridges found</h3>
-            <p>{activeFilters > 0 ? 'Try adjusting your filters.' : 'No bridges registered yet.'}</p>
+        <div className="tile">
+          <div className="empty-state">
+            <FiDatabase />
+            <h3>No structures found</h3>
+            <p>
+              {activeFilters > 0
+                ? 'No structures match the current filters.'
+                : 'No bridges have been registered in this system yet.'}
+            </p>
             {activeFilters > 0
-              ? <button className="btn btn-secondary btn-sm" onClick={clearFilters}><MdRefresh /> Clear Filters</button>
-              : <Link to="/bridges/new" className="btn btn-primary btn-sm"><MdAdd /> Register First Bridge</Link>
-            }
+              ? (
+                <button className="btn btn-secondary btn-sm" onClick={clearFilters}>
+                  <FiRefreshCw size={12} /> Clear filters
+                </button>
+              ) : (
+                <Link to="/bridges/new" className="btn btn-primary btn-sm">
+                  <FiPlus size={13} /> Register first structure
+                </Link>
+              )}
           </div>
         </div>
-      ) : (
+      ) : view === 'table' ? (
         <BridgeTable bridges={bridges} isAdmin={isAdmin} onDelete={setDeleteId} />
+      ) : (
+        <div className="bridge-cards-grid">
+          {bridges.map((b) => (
+            <BridgeCard key={b.id} bridge={b} isAdmin={isAdmin} onDelete={setDeleteId} />
+          ))}
+        </div>
       )}
 
       <ConfirmDialog
         open={Boolean(deleteId)}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Bridge"
-        message="Delete this bridge and all its inspections, photos, and history? This cannot be undone."
-        confirmLabel="Delete Bridge"
+        title="Hard delete structure"
+        message="Delete this structure together with every inspection, photograph, maintenance record and history entry attached to it? This is a hard delete and cannot be undone."
+        confirmLabel="Hard delete"
         loading={deleting}
       />
     </div>

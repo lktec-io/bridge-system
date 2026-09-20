@@ -1,98 +1,87 @@
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
-import { MdVisibility, MdAdd, MdEdit, MdDelete, MdWarning, MdAccountBalance } from 'react-icons/md';
+import { FiEye, FiPlus, FiEdit2, FiTrash2, FiAlertTriangle } from 'react-icons/fi';
 import { ConditionBadge } from '../ui/Badge';
+import { fmtDate } from '../../utils/format';
 
-const safeDate = (d, fmt) => {
-  if (!d) return '—';
-  const dt = new Date(d);
-  return isNaN(dt.getTime()) ? '—' : format(dt, fmt);
-};
-
-const condBand = (s) => ({ GOOD: 'good', FAIR: 'fair', POOR: 'poor' })[s] ?? 'none';
+const condClass = (s) => ({ GOOD: 'cond-good', FAIR: 'cond-fair', POOR: 'cond-poor' })[s] ?? 'cond-none';
 
 export default function BridgeCard({ bridge, isAdmin, onDelete }) {
-  const lastIns         = bridge.inspections?.[0];
-  const cond            = lastIns?.conditionStatus ?? null;
-  const unresolvedCount = bridge.inspections?.filter((i) => i.defectDescription && !i.isResolved).length ?? 0;
+  const lastIns    = bridge.inspections?.[0];
+  const cond       = lastIns?.conditionStatus ?? null;
+  const unresolved = bridge.inspections?.filter((i) => i.defectDescription && !i.isResolved).length ?? 0;
 
   return (
-    <div className={`bridge-card ${cond === 'POOR' ? 'bridge-card-poor' : ''}`}>
-      <div className={`condition-band ${condBand(cond)}`} />
+    <article className={`bridge-card ${condClass(cond)}`}>
+
+      <div className="bridge-card-head">
+        <div style={{ minWidth: 0 }}>
+          <Link to={`/bridges/${bridge.id}`} className="bridge-card-serial">
+            {bridge.serialNumber}
+          </Link>
+          <div className="bridge-card-meta truncate">
+            {bridge.structureType}
+            {bridge.section ? ` · ${bridge.section}` : ''}
+            {bridge.chainage != null ? ` · Km ${Number(bridge.chainage).toFixed(3)}` : ''}
+          </div>
+        </div>
+        <ConditionBadge status={cond} />
+      </div>
 
       <div className="bridge-card-body">
-        {/* Header */}
-        <div className="bridge-card-head">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <MdAccountBalance style={{ color: 'var(--primary)', fontSize: 18, flexShrink: 0 }} />
-            <Link to={`/bridges/${bridge.id}`} className="bridge-card-serial">
-              {bridge.serialNumber}
-            </Link>
-          </div>
-          <ConditionBadge status={cond} />
-        </div>
-
-        {/* Meta */}
-        <div className="bridge-card-meta">
-          <span>{bridge.structureType}</span>
-          {bridge.section && <><span className="sep">·</span><span>{bridge.section}</span></>}
-          {bridge.chainage && <><span className="sep">·</span><span>Km {Number(bridge.chainage).toFixed(3)}</span></>}
-        </div>
-
-        {/* Stats row */}
         <div className="bridge-card-stats">
           <div className="bridge-card-stat">
-            <dt>Inspections</dt>
-            <dd>{bridge._count?.inspections ?? bridge.inspections?.length ?? 0}</dd>
+            <span>Inspections</span>
+            <strong>{bridge._count?.inspections ?? bridge.inspections?.length ?? 0}</strong>
           </div>
           <div className="bridge-card-stat">
-            <dt>Last Inspected</dt>
-            <dd>
+            <span>Last filed</span>
+            <strong>
               {lastIns
-                ? safeDate(lastIns.inspectionDate, 'dd MMM yyyy')
-                : <span style={{ color: 'var(--warning)', fontSize: 12, fontWeight: 600 }}><MdWarning size={11} style={{ verticalAlign: 'middle' }} /> Never</span>
-              }
-            </dd>
+                ? fmtDate(lastIns.inspectionDate)
+                : <span style={{ color: 'var(--fair)' }}>Never</span>}
+            </strong>
           </div>
-          {unresolvedCount > 0 && (
-            <div className="bridge-card-stat">
-              <dt>Unresolved</dt>
-              <dd style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <MdWarning size={13} /> {unresolvedCount}
-              </dd>
-            </div>
-          )}
+          <div className="bridge-card-stat">
+            <span>Open defects</span>
+            <strong style={unresolved > 0 ? { color: 'var(--poor)' } : undefined}>
+              {unresolved > 0 && <FiAlertTriangle size={11} style={{ verticalAlign: '-1px', marginRight: 3 }} />}
+              {unresolved}
+            </strong>
+          </div>
         </div>
 
-        {/* Dimensions */}
-        {(bridge.length || bridge.width) && (
-          <div style={{ fontSize: 12, color: 'var(--text-light)', marginBottom: 12 }}>
+        {(bridge.length || bridge.width || bridge.height) && (
+          <div className="muted mono" style={{ fontSize: 'var(--fs-micro)', marginTop: 'var(--sp-2)' }}>
             {[
-              bridge.length && `L: ${bridge.length} m`,
-              bridge.width  && `W: ${bridge.width} m`,
-              bridge.height && `H: ${bridge.height} m`,
-            ].filter(Boolean).join(' · ')}
+              bridge.length && `L ${bridge.length} m`,
+              bridge.width  && `W ${bridge.width} m`,
+              bridge.height && `H ${bridge.height} m`,
+              bridge.numberOfSpans && `${bridge.numberOfSpans} span(s)`,
+            ].filter(Boolean).join('  ·  ')}
           </div>
         )}
-
-        {/* Actions */}
-        <div className="bridge-card-actions">
-          <Link to={`/bridges/${bridge.id}`} className="btn btn-ghost btn-sm" title="View">
-            <MdVisibility /> View
-          </Link>
-          <Link to={`/bridges/${bridge.id}/inspections/new`} className="btn btn-primary btn-sm" title="Add Inspection">
-            <MdAdd /> Inspect
-          </Link>
-          <Link to={`/bridges/${bridge.id}/edit`} className="btn btn-ghost btn-sm btn-icon" title="Edit">
-            <MdEdit />
-          </Link>
-          {isAdmin && (
-            <button className="btn btn-danger btn-sm btn-icon" title="Delete" onClick={() => onDelete?.(bridge.id)}>
-              <MdDelete />
-            </button>
-          )}
-        </div>
       </div>
-    </div>
+
+      <div className="bridge-card-actions no-print">
+        <Link to={`/bridges/${bridge.id}`} className="btn btn-ghost btn-sm">
+          <FiEye size={12} /> Profile
+        </Link>
+        <Link to={`/bridges/${bridge.id}/inspections/new`} className="btn btn-primary btn-sm">
+          <FiPlus size={12} /> Inspect
+        </Link>
+        <Link to={`/bridges/${bridge.id}/edit`} className="btn btn-ghost btn-sm btn-icon" title="Edit">
+          <FiEdit2 size={12} />
+        </Link>
+        {isAdmin && (
+          <button
+            className="btn btn-outline-danger btn-sm btn-icon"
+            title="Hard delete structure"
+            onClick={() => onDelete?.(bridge.id)}
+          >
+            <FiTrash2 size={12} />
+          </button>
+        )}
+      </div>
+    </article>
   );
 }

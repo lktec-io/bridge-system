@@ -72,12 +72,15 @@ export const getBridgeHistory = asyncHandler(async (req, res) => {
 // ── helpers ──────────────────────────────────────────────────
 function sanitize(body) {
   const {
-    serialNumber, structureType, section, chainage,
+    serialNumber, bridgeName, structureType, section, chainage,
     northing, easting, altitude, length, width, height,
-    numberOfSpans, remark,
+    numberOfSpans, constructionYear, remark,
   } = body;
 
   const d = { serialNumber, structureType, section, chainage: Number(chainage) };
+
+  if (bridgeName       !== undefined) d.bridgeName       = bridgeName || null;
+  if (constructionYear !== undefined) d.constructionYear = constructionYear ? Number(constructionYear) : null;
 
   const opt = (val) => (val !== undefined ? (val ? Number(val) : null) : undefined);
   if (northing      !== undefined) d.northing      = opt(northing);
