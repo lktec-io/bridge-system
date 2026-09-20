@@ -1,92 +1,92 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   FiPlus, FiRefreshCw, FiAlertOctagon, FiDatabase, FiGrid, FiList,
 } from 'react-icons/fi';
 import { bridgesAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
+import usePaginatedQuery from '../hooks/usePaginatedQuery';
 import BridgeSearch  from '../components/bridges/BridgeSearch';
 import BridgeTable   from '../components/bridges/BridgeTable';
 import BridgeCard    from '../components/bridges/BridgeCard';
+import Pagination    from '../components/ui/Pagination';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
+
+const DEFAULTS = {
+  page: 1, limit: 25, search: '', condition: '', dateFilter: '',
+  sortBy: 'created', sortDir: 'desc',
+};
+
+/* Only non-default values go in the URL, so a shared link stays readable. */
+function paramsToSearch(params) {
+  const out = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== '' && v !== null && v !== undefined && String(v) !== String(DEFAULTS[k])) out[k] = String(v);
+  }
+  return out;
+}
+
+function searchToParams(searchParams) {
+  const next = { ...DEFAULTS };
+  for (const key of Object.keys(DEFAULTS)) {
+    const raw = searchParams.get(key);
+    if (raw === null) continue;
+    next[key] = key === 'page' || key === 'limit' ? Number(raw) || DEFAULTS[key] : raw;
+  }
+  return next;
+}
 
 export default function BridgesList() {
   const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [bridges,     setBridges]     = useState([]);
-  const [loading,     setLoading]     = useState(true);
+  const [params, setParams] = useState(() => searchToParams(searchParams));
+  const [view, setView] = useState('table');
+
   const [deleteId,    setDeleteId]    = useState(null);
   const [deleting,    setDeleting]    = useState(false);
   const [deleteError, setDeleteError] = useState('');
-  const [view,        setView]        = useState('table');
 
-  const [search,     setSearch]     = useState(searchParams.get('search')     || '');
-  const [condition,  setCondition]  = useState(searchParams.get('condition')  || '');
-  const [dateFilter, setDateFilter] = useState(searchParams.get('dateFilter') || '');
-  const [sortBy,     setSortBy]     = useState(searchParams.get('sortBy')     || 'created');
+  /* Server does the filtering, sorting and paging; the hook debounces typing
+     and aborts superseded requests. */
+  const { rows, total, page, pages, limit, loading, error, refetch } =
+    usePaginatedQuery(bridgesAPI.getAll, params);
 
-  const fetchBridges = useCallback(async (params = {}) => {
-    setLoading(true);
-    try {
-      const { data } = await bridgesAPI.getAll(params);
-      setBridges(Array.isArray(data) ? data : (data.bridges ?? []));
-    } catch {
-      setBridges([]);
-    } finally {
-      setLoading(false);
-    }
+  // Keep the URL in step so the view is shareable and survives a reload
+  useEffect(() => {
+    setSearchParams(paramsToSearch(params), { replace: true });
+  }, [params, setSearchParams]);
+
+  // Any filter change resets to page 1 — staying on page 7 of a new result set
+  // would show an empty table.
+  const patch = useCallback((changes) => {
+    setParams((prev) => ({ ...prev, ...changes, page: 'page' in changes ? changes.page : 1 }));
   }, []);
 
-  useEffect(() => {
-    fetchBridges({ search, condition, dateFilter, sortBy });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const clearFilters = useCallback(() => setParams(DEFAULTS), []);
 
-  const handleFilterChange = (key, value) => {
-    if (key === 'search')     setSearch(value);
-    if (key === 'condition')  setCondition(value);
-    if (key === 'dateFilter') setDateFilter(value);
-    if (key === 'sortBy')     setSortBy(value);
-  };
-
-  const applyFilters = () => {
-    const params = {};
-    if (search)     params.search     = search;
-    if (condition)  params.condition  = condition;
-    if (dateFilter) params.dateFilter = dateFilter;
-    if (sortBy !== 'created') params.sortBy = sortBy;
-    setSearchParams(params);
-    fetchBridges(params);
-  };
-
-  const clearFilters = () => {
-    setSearch(''); setCondition(''); setDateFilter(''); setSortBy('created');
-    setSearchParams({});
-    fetchBridges({});
-  };
+  const handleSort = useCallback((sortBy, sortDir) => patch({ sortBy, sortDir }), [patch]);
 
   const handleDelete = async () => {
     setDeleting(true);
     try {
       await bridgesAPI.delete(deleteId);
-      setBridges((prev) => prev.filter((b) => b.id !== deleteId));
       setDeleteId(null);
+      refetch();
     } catch (err) {
-      setDeleteError(err.response?.data?.message || 'Failed to delete this structure. Please try again.');
+      setDeleteError(err.response?.data?.message || 'Failed to delete this structure.');
       setDeleteId(null);
     } finally {
       setDeleting(false);
     }
   };
 
-  const activeFilters = [search, condition, dateFilter].filter(Boolean).length;
-
   return (
     <div>
-      {deleteError && (
+      {(deleteError || error) && (
         <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
           <FiAlertOctagon size={15} />
-          <span style={{ flex: 1 }}>{deleteError}</span>
+          <span style={{ flex: 1 }}>{deleteError || error}</span>
           <button className="btn-close" onClick={() => setDeleteError('')}>×</button>
         </div>
       )}
@@ -95,12 +95,9 @@ export default function BridgesList() {
         <div>
           <h2>Bridge Inventory</h2>
           <p>
-            {loading ? 'Loading…' : `${bridges.length} structure(s) in scope`}
-            {activeFilters > 0 && (
-              <span className="chip chip-accent" style={{ marginLeft: 8 }}>
-                {activeFilters} filter(s) active
-              </span>
-            )}
+            {loading && total === 0
+              ? 'Querying…'
+              : `${total} structure(s) · page ${page} of ${pages}`}
           </p>
         </div>
         <div className="toolbar no-print">
@@ -108,14 +105,12 @@ export default function BridgesList() {
             <button
               className={`seg-btn${view === 'table' ? ' active' : ''}`}
               onClick={() => setView('table')}
-              title="Table view"
             >
               <FiList size={12} /> Table
             </button>
             <button
               className={`seg-btn${view === 'grid' ? ' active' : ''}`}
               onClick={() => setView('grid')}
-              title="Card view"
             >
               <FiGrid size={12} /> Cards
             </button>
@@ -127,49 +122,68 @@ export default function BridgesList() {
       </div>
 
       <BridgeSearch
-        search={search}
-        condition={condition}
-        dateFilter={dateFilter}
-        sortBy={sortBy}
-        onChange={handleFilterChange}
-        onApply={applyFilters}
+        values={params}
+        onChange={patch}
         onClear={clearFilters}
+        resultCount={total}
+        loading={loading}
       />
 
-      {loading ? (
+      {loading && rows.length === 0 ? (
         <div className="loading-center">
           <div className="spinner" />
-          <span>Loading inventory…</span>
+          <span>Querying inventory…</span>
         </div>
-      ) : bridges.length === 0 ? (
+      ) : rows.length === 0 ? (
         <div className="tile">
           <div className="empty-state">
             <FiDatabase />
             <h3>No structures found</h3>
             <p>
-              {activeFilters > 0
+              {params.search || params.condition || params.dateFilter
                 ? 'No structures match the current filters.'
                 : 'No bridges have been registered in this system yet.'}
             </p>
-            {activeFilters > 0
-              ? (
-                <button className="btn btn-secondary btn-sm" onClick={clearFilters}>
-                  <FiRefreshCw size={12} /> Clear filters
-                </button>
-              ) : (
-                <Link to="/bridges/new" className="btn btn-primary btn-sm">
-                  <FiPlus size={13} /> Register first structure
-                </Link>
-              )}
+            {params.search || params.condition || params.dateFilter ? (
+              <button className="btn btn-secondary btn-sm" onClick={clearFilters}>
+                <FiRefreshCw size={12} /> Clear filters
+              </button>
+            ) : (
+              <Link to="/bridges/new" className="btn btn-primary btn-sm">
+                <FiPlus size={13} /> Register first structure
+              </Link>
+            )}
           </div>
         </div>
-      ) : view === 'table' ? (
-        <BridgeTable bridges={bridges} isAdmin={isAdmin} onDelete={setDeleteId} />
       ) : (
-        <div className="bridge-cards-grid">
-          {bridges.map((b) => (
-            <BridgeCard key={b.id} bridge={b} isAdmin={isAdmin} onDelete={setDeleteId} />
-          ))}
+        <div style={{ opacity: loading ? 0.6 : 1, transition: 'opacity 120ms' }}>
+          {view === 'table' ? (
+            <BridgeTable
+              bridges={rows}
+              isAdmin={isAdmin}
+              onDelete={setDeleteId}
+              sortBy={params.sortBy}
+              sortDir={params.sortDir}
+              onSort={handleSort}
+            />
+          ) : (
+            <div className="bridge-cards-grid">
+              {rows.map((b) => (
+                <BridgeCard key={b.id} bridge={b} isAdmin={isAdmin} onDelete={setDeleteId} />
+              ))}
+            </div>
+          )}
+
+          <Pagination
+            page={page}
+            pages={pages}
+            total={total}
+            limit={limit}
+            loading={loading}
+            unit="structure"
+            onPage={(p) => patch({ page: p })}
+            onLimit={(l) => patch({ limit: l })}
+          />
         </div>
       )}
 

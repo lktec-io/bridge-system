@@ -1,72 +1,92 @@
 import asyncHandler from '../utils/asyncHandler.js';
-import pool         from '../config/database.js';
 import * as bridgeService from '../services/bridgeService.js';
+import { listHistory } from '../services/historyService.js';
 import { createNotification } from '../services/notificationService.js';
 
-const toISO = (v) => v ? (v instanceof Date ? v.toISOString() : new Date(v).toISOString()) : null;
+function notify(type, title, message, entityType, entityId) {
+  createNotification(type, title, message, entityType, entityId).catch((err) =>
+    console.error(`[notify] ${type} failed for ${entityType} ${entityId}: ${err.message}`)
+  );
+}
 
+/**
+ * GET /api/bridges
+ *
+ * Paginated and filtered in MySQL:
+ *   ?page=1&limit=25&search=BRG&condition=POOR&dateFilter=overdue
+ *   &sortBy=chainage&sortDir=asc
+ *
+ * Responds { rows, total, page, limit, pages }. The previous version returned
+ * the entire table as a bare array and filtered client-side.
+ */
 export const getAllBridges = asyncHandler(async (req, res) => {
-  const bridges = await bridgeService.getAllBridges(req.query);
-  res.json(bridges);
+  const result = await bridgeService.getAllBridges(req.query);
+  res.json(result);
+});
+
+/** GET /api/bridges/positions — slim payload for the GIS viewport. */
+export const getBridgePositions = asyncHandler(async (_req, res) => {
+  const positions = await bridgeService.getBridgePositions();
+  res.json(positions);
+});
+
+/** GET /api/bridges/options — id + label only, for form pickers. */
+export const getBridgeOptions = asyncHandler(async (_req, res) => {
+  const options = await bridgeService.getBridgeOptions();
+  res.json(options);
 });
 
 export const getBridgeById = asyncHandler(async (req, res) => {
-  const bridge = await bridgeService.getBridgeById(Number(req.params.id));
+  const bridge = await bridgeService.getBridgeById(Number(req.params.id), {
+    inspectionLimit: req.query.inspectionLimit,
+  });
   if (!bridge) return res.status(404).json({ message: 'Bridge not found' });
   res.json(bridge);
 });
 
 export const createBridge = asyncHandler(async (req, res) => {
-  const data   = sanitize(req.body);
+  const data = sanitize(req.body);
+
+  if (!data.serialNumber || !data.structureType || !data.section || Number.isNaN(data.chainage)) {
+    return res.status(400).json({
+      message: 'serialNumber, structureType, section and a numeric chainage are required',
+    });
+  }
+
   const bridge = await bridgeService.createBridge(data, req.user?.id);
-  createNotification(
+
+  notify(
     'BRIDGE_CREATED',
-    'New bridge registered',
-    `${bridge.serialNumber} has been added to the registry`,
+    'New structure registered',
+    `${bridge.serialNumber} has been added to the inventory`,
     'bridge',
     bridge.id
-  ).catch(() => {});
+  );
+
   res.status(201).json(bridge);
 });
 
 export const updateBridge = asyncHandler(async (req, res) => {
-  const id     = Number(req.params.id);
-  const data   = sanitize(req.body);
-  const bridge = await bridgeService.updateBridge(id, data, req.user?.id);
+  const bridge = await bridgeService.updateBridge(Number(req.params.id), sanitize(req.body), req.user?.id);
   if (!bridge) return res.status(404).json({ message: 'Bridge not found' });
   res.json(bridge);
 });
 
 export const deleteBridge = asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const [check] = await pool.query('SELECT id FROM bridges WHERE id = ?', [id]);
-  if (!check.length) return res.status(404).json({ message: 'Bridge not found' });
-  await bridgeService.deleteBridge(id);
+  const removed = await bridgeService.deleteBridge(Number(req.params.id), req.user?.id);
+  if (!removed) return res.status(404).json({ message: 'Bridge not found' });
   res.json({ message: 'Bridge deleted successfully' });
 });
 
+/** GET /api/bridges/:id/history — paginated slice of one structure's trail. */
 export const getBridgeHistory = asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const [rows] = await pool.query(
-    `SELECT hl.id, hl.bridge_id, hl.user_id, hl.action_type,
-            hl.old_values, hl.new_values, hl.created_at,
-            u.first_name AS user_fn, u.last_name AS user_ln
-     FROM history_logs hl
-     LEFT JOIN users u ON u.id = hl.user_id
-     WHERE hl.bridge_id = ?
-     ORDER BY hl.created_at DESC`,
-    [id]
-  );
-  res.json(rows.map(r => ({
-    id:         r.id,
-    bridgeId:   r.bridge_id,
-    userId:     r.user_id,
-    actionType: r.action_type,
-    oldValues:  typeof r.old_values === 'string' ? JSON.parse(r.old_values) : (r.old_values ?? {}),
-    newValues:  typeof r.new_values === 'string' ? JSON.parse(r.new_values) : (r.new_values ?? {}),
-    createdAt:  toISO(r.created_at),
-    user: r.user_fn ? { id: r.user_id, firstName: r.user_fn, lastName: r.user_ln } : null,
-  })));
+  const result = await listHistory({
+    bridgeId: Number(req.params.id),
+    page:     req.query.page,
+    limit:    req.query.limit ?? 100,
+  });
+  // Historic clients expect a bare array here; keep that shape.
+  res.json(result.rows);
 });
 
 // ── helpers ──────────────────────────────────────────────────
@@ -79,18 +99,18 @@ function sanitize(body) {
 
   const d = { serialNumber, structureType, section, chainage: Number(chainage) };
 
-  if (bridgeName       !== undefined) d.bridgeName       = bridgeName || null;
-  if (constructionYear !== undefined) d.constructionYear = constructionYear ? Number(constructionYear) : null;
+  const optNum = (val) => (val !== undefined ? (val === '' || val === null ? null : Number(val)) : undefined);
 
-  const opt = (val) => (val !== undefined ? (val ? Number(val) : null) : undefined);
-  if (northing      !== undefined) d.northing      = opt(northing);
-  if (easting       !== undefined) d.easting       = opt(easting);
-  if (altitude      !== undefined) d.altitude      = opt(altitude);
-  if (length        !== undefined) d.length        = opt(length);
-  if (width         !== undefined) d.width         = opt(width);
-  if (height        !== undefined) d.height        = opt(height);
-  if (numberOfSpans !== undefined) d.numberOfSpans = numberOfSpans ? Number(numberOfSpans) : null;
-  if (remark        !== undefined) d.remark        = remark || null;
+  if (bridgeName       !== undefined) d.bridgeName       = bridgeName || null;
+  if (constructionYear !== undefined) d.constructionYear = optNum(constructionYear);
+  if (northing         !== undefined) d.northing         = optNum(northing);
+  if (easting          !== undefined) d.easting          = optNum(easting);
+  if (altitude         !== undefined) d.altitude         = optNum(altitude);
+  if (length           !== undefined) d.length           = optNum(length);
+  if (width            !== undefined) d.width            = optNum(width);
+  if (height           !== undefined) d.height           = optNum(height);
+  if (numberOfSpans    !== undefined) d.numberOfSpans    = optNum(numberOfSpans);
+  if (remark           !== undefined) d.remark           = remark || null;
 
   return d;
 }

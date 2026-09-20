@@ -17,6 +17,7 @@ const ROUTE_META = {
   '/sensors':     { title: 'Sensor / IoT Analytics',      subtitle: 'Structural telemetry streams and threshold breaches' },
   '/alerts':      { title: 'Structural Health Alerts',    subtitle: 'Critical conditions and overdue inspection signals' },
   '/map':         { title: 'GIS Bridge Map',              subtitle: 'Geospatial distribution of monitored structures' },
+  '/logs':        { title: 'System Logs',                 subtitle: 'Audit trail of every recorded change' },
   '/users':       { title: 'System Administration',       subtitle: 'Operator accounts and access control' },
 };
 

@@ -72,7 +72,7 @@ export default function SensorAnalytics() {
     const [devRes, sumRes, brRes] = await Promise.allSettled([
       sensorsAPI.getDevices(),
       sensorsAPI.getSummary(),
-      bridgesAPI.getAll(),
+      bridgesAPI.getOptions(),
     ]);
 
     if (devRes.status === 'fulfilled') {
@@ -84,10 +84,7 @@ export default function SensorAnalytics() {
       setError(devRes.reason?.response?.data?.message || 'Unable to load sensor devices');
     }
     if (sumRes.status === 'fulfilled') setSummary(sumRes.value.data);
-    if (brRes.status  === 'fulfilled') {
-      const d = brRes.value.data;
-      setBridges(Array.isArray(d) ? d : (d.bridges ?? []));
-    }
+    if (brRes.status  === 'fulfilled') setBridges(brRes.value.data ?? []);
     setLoading(false);
   }, []);
 

@@ -47,7 +47,8 @@ export default function Maintenance() {
     const [recRes, sumRes, brRes] = await Promise.allSettled([
       maintenanceAPI.getAll(),
       maintenanceAPI.getSummary(),
-      bridgesAPI.getAll(),
+      // id + label only — the picker never needed full bridge records
+      bridgesAPI.getOptions(),
     ]);
 
     if (recRes.status === 'fulfilled') {
@@ -61,10 +62,7 @@ export default function Maintenance() {
     }
 
     if (sumRes.status === 'fulfilled') setSummary(sumRes.value.data);
-    if (brRes.status  === 'fulfilled') {
-      const d = brRes.value.data;
-      setBridges(Array.isArray(d) ? d : (d.bridges ?? []));
-    }
+    if (brRes.status  === 'fulfilled') setBridges(brRes.value.data ?? []);
     setLoading(false);
   }, []);
 

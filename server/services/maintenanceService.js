@@ -1,5 +1,5 @@
-import pool from '../config/database.js';
-import { logHistory } from './historyService.js';
+import pool, { withTransaction } from '../config/database.js';
+import { logHistoryTx } from './historyService.js';
 
 const toISO = (v) => v ? (v instanceof Date ? v.toISOString() : new Date(v).toISOString()) : null;
 const num   = (v) => (v === null || v === undefined ? null : Number(v));
@@ -76,36 +76,38 @@ export const createMaintenance = async (data, userId) => {
   const status = STATUSES.includes(String(data.status).toUpperCase())
     ? String(data.status).toUpperCase() : 'PLANNED';
 
-  const [result] = await pool.query(
-    `INSERT INTO maintenance_records
-       (bridge_id, maintenance_type, description, cost, maintenance_date, performed_by, status, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      Number(data.bridgeId),
-      type,
-      data.description,
-      data.cost === '' || data.cost === undefined || data.cost === null ? null : Number(data.cost),
-      new Date(data.maintenanceDate),
-      data.performedBy,
-      status,
-      userId ?? null,
-    ]
-  );
+  // Work order and its audit entry commit together or not at all.
+  const insertId = await withTransaction(async (conn) => {
+    const [result] = await conn.query(
+      `INSERT INTO maintenance_records
+         (bridge_id, maintenance_type, description, cost, maintenance_date, performed_by, status, created_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        Number(data.bridgeId),
+        type,
+        data.description,
+        data.cost === '' || data.cost === undefined || data.cost === null ? null : Number(data.cost),
+        new Date(data.maintenanceDate),
+        data.performedBy,
+        status,
+        userId ?? null,
+      ]
+    );
 
-  await logHistory(Number(data.bridgeId), userId, 'MAINTENANCE_LOGGED', {}, {
-    maintenanceType: type,
-    status,
-    maintenanceDate: data.maintenanceDate,
+    await logHistoryTx(conn, Number(data.bridgeId), userId, 'MAINTENANCE_LOGGED', {}, {
+      maintenanceType: type,
+      status,
+      maintenanceDate: data.maintenanceDate,
+    });
+
+    return result.insertId;
   });
 
-  return getMaintenanceById(result.insertId);
+  return getMaintenanceById(insertId);
 };
 
 // ── update ────────────────────────────────────────────────────
 export const updateMaintenance = async (id, data, userId) => {
-  const [before] = await pool.query('SELECT * FROM maintenance_records WHERE id = ?', [id]);
-  if (!before.length) return null;
-
   const COL = {
     maintenanceType: 'maintenance_type',
     description:     'description',
@@ -115,53 +117,75 @@ export const updateMaintenance = async (id, data, userId) => {
     status:          'status',
   };
 
-  const sets   = [];
-  const params = [];
-
-  for (const [jsKey, dbCol] of Object.entries(COL)) {
-    if (data[jsKey] === undefined) continue;
-
-    if (jsKey === 'maintenanceType') {
-      const v = String(data[jsKey]).toUpperCase();
-      if (!TYPES.includes(v)) continue;
-      sets.push(`${dbCol} = ?`); params.push(v);
-    } else if (jsKey === 'status') {
-      const v = String(data[jsKey]).toUpperCase();
-      if (!STATUSES.includes(v)) continue;
-      sets.push(`${dbCol} = ?`); params.push(v);
-    } else if (jsKey === 'maintenanceDate') {
-      sets.push(`${dbCol} = ?`); params.push(new Date(data[jsKey]));
-    } else if (jsKey === 'cost') {
-      sets.push(`${dbCol} = ?`);
-      params.push(data[jsKey] === '' || data[jsKey] === null ? null : Number(data[jsKey]));
-    } else {
-      sets.push(`${dbCol} = ?`); params.push(data[jsKey] || null);
-    }
-  }
-
-  if (sets.length) {
-    params.push(id);
-    await pool.query(`UPDATE maintenance_records SET ${sets.join(', ')} WHERE id = ?`, params);
-  }
-
-  const record = await getMaintenanceById(id);
-
-  if (data.status !== undefined && before[0].status !== record.status) {
-    await logHistory(before[0].bridge_id, userId, 'MAINTENANCE_UPDATED',
-      { status: before[0].status },
-      { status: record.status }
+  const found = await withTransaction(async (conn) => {
+    // Locked read: a concurrent status change cannot interleave with this one.
+    const [before] = await conn.query(
+      'SELECT * FROM maintenance_records WHERE id = ? FOR UPDATE', [id]
     );
-  }
+    if (!before.length) return false;
 
-  return record;
+    const sets   = [];
+    const params = [];
+
+    for (const [jsKey, dbCol] of Object.entries(COL)) {
+      if (data[jsKey] === undefined) continue;
+
+      if (jsKey === 'maintenanceType') {
+        const v = String(data[jsKey]).toUpperCase();
+        if (!TYPES.includes(v)) continue;
+        sets.push(`${dbCol} = ?`); params.push(v);
+      } else if (jsKey === 'status') {
+        const v = String(data[jsKey]).toUpperCase();
+        if (!STATUSES.includes(v)) continue;
+        sets.push(`${dbCol} = ?`); params.push(v);
+      } else if (jsKey === 'maintenanceDate') {
+        sets.push(`${dbCol} = ?`); params.push(new Date(data[jsKey]));
+      } else if (jsKey === 'cost') {
+        sets.push(`${dbCol} = ?`);
+        params.push(data[jsKey] === '' || data[jsKey] === null ? null : Number(data[jsKey]));
+      } else {
+        sets.push(`${dbCol} = ?`); params.push(data[jsKey] || null);
+      }
+    }
+
+    if (sets.length) {
+      await conn.query(
+        `UPDATE maintenance_records SET ${sets.join(', ')} WHERE id = ?`, [...params, id]
+      );
+    }
+
+    // Audit only a real status transition
+    const nextStatus = data.status !== undefined ? String(data.status).toUpperCase() : before[0].status;
+    if (nextStatus !== before[0].status && STATUSES.includes(nextStatus)) {
+      await logHistoryTx(conn, before[0].bridge_id, userId, 'MAINTENANCE_UPDATED',
+        { status: before[0].status },
+        { status: nextStatus }
+      );
+    }
+
+    return true;
+  });
+
+  return found ? getMaintenanceById(id) : null;
 };
 
 // ── delete ────────────────────────────────────────────────────
-export const deleteMaintenance = async (id) => {
-  const [rows] = await pool.query('SELECT bridge_id FROM maintenance_records WHERE id = ?', [id]);
-  if (!rows.length) return false;
-  await pool.query('DELETE FROM maintenance_records WHERE id = ?', [id]);
-  return true;
+export const deleteMaintenance = async (id, userId) => {
+  return withTransaction(async (conn) => {
+    const [rows] = await conn.query(
+      'SELECT bridge_id, maintenance_type, status FROM maintenance_records WHERE id = ? FOR UPDATE',
+      [id]
+    );
+    if (!rows.length) return false;
+
+    await logHistoryTx(conn, rows[0].bridge_id, userId, 'MAINTENANCE_DELETED',
+      { maintenanceType: rows[0].maintenance_type, status: rows[0].status },
+      {}
+    );
+
+    await conn.query('DELETE FROM maintenance_records WHERE id = ?', [id]);
+    return true;
+  });
 };
 
 // ── summary (dashboard + alerts) ──────────────────────────────

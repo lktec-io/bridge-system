@@ -90,6 +90,10 @@ inspections/photos/maintenance/history, and three triggers that keep
 Severity: **S1** = data loss, security, or silent failure · **S2** = breaks under growth ·
 **S3** = maintainability.
 
+> **Status:** findings 1, 4, 6, 7, 8, 13, 16 and 17 are **closed** by the refactor pass —
+> see §6 for exactly what changed and where. Findings 2, 3 (partially), 5, 9, 10, 11, 12,
+> 14, 15 and 18 remain open; 2 and 3 need action on the live database, not in code.
+
 | # | Severity | Area | Finding |
 |---|---|---|---|
 | 1 | **S1** | Data integrity | Global input sanitiser destroys engineering text containing `<` or `>` |
@@ -346,7 +350,7 @@ There is no server-state library. Every page owns its fetch, so:
 - **Effect-driven fetching** — `react-hooks/set-state-in-effect` fires on 12 call sites (8 pre-existing, 4 added by the new pages, following the established pattern). It is a real cascading-render smell, and the correct fix is one layer, not 12 patches.
 - `localStorage.bis_user` can drift from server truth between mounts; a role change mid-session is only picked up on reload.
 
-**Fix:** adopTanStack Query (or SWR) with query keys per resource, `staleTime` tuned
+**Fix:** adopt TanStack Query (or SWR) with query keys per resource, `staleTime` tuned
 per endpoint, and invalidation on mutation. One dependency removes the staleness, the
 races, the duplicate fetching, and the lint class in a single pass.
 
@@ -378,17 +382,17 @@ is a ~150 KB initial chunk.
 
 **P0 — this week**
 
-1. Remove the tag-stripping sanitiser (§3.1) and audit existing rows for corrupted measurements.
-2. Check production for the seeded `@bms.gov` accounts and rotate or delete them (§3.2).
-3. Verify the live `notifications` shape; replace the empty catch blocks (§3.3).
-4. Make defect approval conditional, idempotent and non-self-approvable (§3.4).
+1. ~~Remove the tag-stripping sanitiser (§3.1)~~ — **done (§6)**. Still outstanding: audit existing rows for measurements already corrupted.
+2. Check production for the seeded `@bms.gov` accounts and rotate or delete them (§3.2). **Not code — must be run against the live database.**
+3. ~~Fix the `notifications` definition~~ — **schema.sql corrected; empty catch blocks replaced (§6)**. Still outstanding: confirm which table shape the live database has.
+4. ~~Make defect approval conditional, idempotent and non-self-approvable (§3.4)~~ — **done (§6)**.
 
 **P1 — next sprint**
 
-5. Pagination plus SQL-side filtering on `current_condition`; slim `/positions` endpoint for the map (§3.5, §3.6).
+5. ~~Pagination plus SQL-side filtering on `current_condition`; slim `/positions` endpoint~~ — **done (§6)**.
 6. Verify the Nginx `X-Forwarded-For` chain; move the rate-limit store to Redis (§3.8).
 7. Relative photo paths, Nginx-served `/uploads/`, storage outside the deploy tree (§3.9).
-8. Transaction around inspection + history; notification outbox (§3.10).
+8. ~~Transaction around inspection + history~~ — **done (§6)**. Notification outbox still open.
 9. Reminder job writes notifications; move to `node-cron` single-instance (§3.11).
 
 **P2 — hardening**
@@ -448,3 +452,39 @@ fetch-in-effect pattern (§3.12).
 
 **Not verified:** nothing was run against a live database or browser in this pass. The
 migration has not been applied, and no deployment was performed.
+
+---
+
+## 6. Refactor pass — applied fixes
+
+Eight findings are closed in code. Everything here builds and passes `node --check`;
+none of it has been run against a live database.
+
+| # | Finding | What was done | Where |
+|---|---|---|---|
+| 1 | Sanitiser corrupts measurements | Tag-stripping regex removed. Input is trimmed and stripped of control characters only; angle brackets, quotes and operators are preserved. XSS is handled at render time by React's escaping, which the app relies on everywhere (no `dangerouslySetInnerHTML`). | `middleware/validate.js` |
+| 4 | Approval has no idempotency or duty separation | Rewritten as a conditional write with five explicit outcomes: 404 not found · 422 no defect to approve · 403 self-approval blocked for non-admins · 409 already signed off (returns the existing resolution) · 200 approved. Concurrency is enforced by the UPDATE predicate `is_resolved = 0`, so two simultaneous approvals produce one write and one audit entry. Admin overrides are recorded as `adminSelfApproval` in the trail. | `services/inspectionService.js`, `controllers/inspectionController.js` |
+| 6 | No pagination; dashboard pulled the table twice | `GET /api/bridges` is now `{ rows, total, page, limit, pages }` with `LIMIT/OFFSET`. Two-step query: page of IDs first (no joins), then hydrate only those rows — per-row work is proportional to the page, not the table. New `GET /api/bridges/positions` (8 columns) feeds the GIS views and `GET /api/bridges/options` feeds form pickers, so neither pulls full records. | `services/bridgeService.js`, `controllers/bridgeController.js`, `routes/bridgeRoutes.js` |
+| 7 | Filters ran in JavaScript after the query | Search, condition, date window and sort all execute in SQL against a whitelisted `ORDER BY`. The `overdue` filter is a SQL `MAX(inspection_date)` comparison, so the Alerts page no longer computes it client-side. | `services/bridgeService.js` |
+| 8 | `current_condition` maintained but never read | Condition filtering now reads the trigger-maintained column, which makes `idx_bridges_current_condition` live. Migration 002 backfills it and adds a `(current_condition, created_at DESC)` composite for the common "worst first, page N" query. | `services/bridgeService.js`, `migrations/002_*.sql` |
+| 13 | Multi-step writes not atomic | `withTransaction()` helper added; bridge create/update/delete, inspection create/update/delete/approve and maintenance create/update/delete now commit their audit entry in the same transaction, with `SELECT … FOR UPDATE` on read-modify-write paths. `logHistoryTx` throws so a failed audit rolls back the business write. Notifications moved after commit and log their failures instead of swallowing them. | `config/database.js`, `services/{bridge,inspection,maintenance,history}Service.js` |
+| 16 | Dead code and duplicate pool | Deleted: `config/db.js` (a second 10-connection pool waiting to be imported), `middleware/errorMiddleware.js`, and five unreferenced frontend modules. ESLint is now **15 findings, below the 17 baseline**. | — |
+| 17 | 641 KB single bundle | Route-level `React.lazy` + `Suspense`, with the map split again inside the dashboard so the KPI strip paints before Leaflet loads. Rolldown `manualChunks` (function form — Vite 8 rejects the object form) isolates React, Leaflet, date-fns and icons into cacheable vendor chunks. | `App.jsx`, `pages/Dashboard.jsx`, `vite.config.js` |
+
+**Bundle result:** entry chunk **44 KB** (12.6 KB gzip) against 641 KB before. Initial load
+is ~339 KB raw / ~107 KB gzip (React 221 KB + axios 38 KB + icons 35 KB + entry 44 KB);
+Leaflet's 157 KB and its 15 KB of CSS now load only when a map is opened, and every page
+is its own chunk of 3–23 KB.
+
+**Also added:** `usePaginatedQuery` — one fetching primitive with AbortSignal cancellation
+(so a slow earlier response can no longer overwrite newer state) and debounced params.
+It closes finding 15 for the paginated lists; the multi-source pages (Alerts,
+Maintenance, Sensors) still fetch directly and remain covered by the P2 data-layer item.
+`GET /api/history` plus a **System Logs** screen expose the audit trail that previously
+had no read path outside a single bridge profile.
+
+**Migration 002** (`002_approval_audit_and_indexes.sql`) adds `inspections.approved_by_user_id`
+with an FK, the two pagination indexes, and the `current_condition` backfill. It is
+additive and re-runnable. The approval path detects whether the column exists and keeps
+working either way, so applying it is not a prerequisite for deploying this code — but
+until it runs, the approver's account id is not recorded.

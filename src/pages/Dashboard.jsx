@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FiDatabase, FiAlertTriangle, FiClipboard, FiActivity, FiRefreshCw,
@@ -7,12 +7,35 @@ import {
 import { bridgesAPI, inspectionsAPI } from '../api/bridges';
 import { useAuth } from '../context/AuthContext';
 import KpiBlock       from '../components/dashboard/KpiBlock';
-import GisHub         from '../components/dashboard/GisHub';
 import OpsTable       from '../components/dashboard/OpsTable';
 import PieChart       from '../components/dashboard/PieChart';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import ConfirmDialog  from '../components/ui/ConfirmDialog';
 import { fmtDateTime } from '../utils/format';
+
+/* Leaflet plus react-leaflet is the single heaviest dependency in the app and
+   nothing above the fold needs it. Splitting it out lets the KPI strip paint
+   first, then the map arrives in its own chunk. */
+const GisHub = lazy(() => import('../components/dashboard/GisHub'));
+
+function GisFallback() {
+  return (
+    <div className="gis-grid">
+      <div className="gis-hub">
+        <div className="gis-toolbar"><span className="card-title">Geospatial Asset Tracking</span></div>
+        <div className="gis-viewport">
+          <div className="loading-center" style={{ height: '100%' }}>
+            <div className="spinner" />
+            <span>Loading map module…</span>
+          </div>
+        </div>
+      </div>
+      <aside className="gis-side">
+        <div className="tile"><div className="skel" style={{ height: 210 }} /></div>
+      </aside>
+    </div>
+  );
+}
 
 /* Inspection throughput bars — last 6 months. */
 function TrendChart({ data = [] }) {
@@ -68,11 +91,11 @@ function DashboardSkeleton() {
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
 
-  const [stats,   setStats]   = useState(null);
-  const [bridges, setBridges] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState('');
-  const [mapError, setMapError] = useState('');
+  const [stats,     setStats]     = useState(null);
+  const [positions, setPositions] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
+  const [mapError,  setMapError]  = useState('');
 
   const [busyId,    setBusyId]    = useState(null);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -84,22 +107,19 @@ export default function Dashboard() {
     setError('');
     setMapError('');
 
-    /* The two calls are independent: a failure to load positions must not
-       blank the KPI strip, and vice versa. */
-    const [statsRes, bridgeRes] = await Promise.allSettled([
+    /* Two independent calls: a failure to load positions must not blank the
+       KPI strip, and vice versa. Positions is the slim coordinates endpoint —
+       the dashboard no longer pulls the whole inventory. */
+    const [statsRes, posRes] = await Promise.allSettled([
       bridgesAPI.getDashboard(),
-      bridgesAPI.getAll(),
+      bridgesAPI.getPositions(),
     ]);
 
     if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
     else setError('Unable to load monitoring metrics');
 
-    if (bridgeRes.status === 'fulfilled') {
-      const data = bridgeRes.value.data;
-      setBridges(Array.isArray(data) ? data : (data.bridges ?? []));
-    } else {
-      setMapError('Unable to load asset positions');
-    }
+    if (posRes.status === 'fulfilled') setPositions(posRes.value.data ?? []);
+    else setMapError('Unable to load asset positions');
 
     setLoading(false);
   }, []);
@@ -272,13 +292,18 @@ export default function Dashboard() {
       </div>
 
       {/* ── SECTION B — GIS / digital twin hub ────────── */}
-      <GisHub
-        bridges={bridges}
-        loading={loading}
-        error={mapError}
-        onRetry={load}
-        healthIndex={healthIndex}
-      />
+      <Suspense fallback={<GisFallback />}>
+        <GisHub
+          positions={positions}
+          conditionCounts={conditionCounts}
+          poorBridges={stats?.poorBridges ?? []}
+          totalBridges={totalBridges}
+          healthIndex={healthIndex}
+          loading={loading}
+          error={mapError}
+          onRetry={load}
+        />
+      </Suspense>
 
       {/* ── SECTION C — data operations ───────────────── */}
       <OpsTable

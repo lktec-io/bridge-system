@@ -1,32 +1,56 @@
 import { Link } from 'react-router-dom';
 import {
-  FiEye, FiPlus, FiEdit2, FiTrash2, FiAlertTriangle,
+  FiEye, FiPlus, FiEdit2, FiTrash2, FiAlertTriangle, FiChevronUp, FiChevronDown,
 } from 'react-icons/fi';
 import { ConditionBadge } from '../ui/Badge';
 import { fmtDate } from '../../utils/format';
 
-export default function BridgeTable({ bridges, isAdmin, onDelete }) {
+/** Header cell that requests a server-side sort. */
+function SortHeader({ column, label, sortBy, sortDir, onSort, align }) {
+  const active = sortBy === column;
+  const nextDir = active && sortDir === 'asc' ? 'desc' : 'asc';
+
+  if (!onSort) return <th style={align ? { textAlign: align } : undefined}>{label}</th>;
+
+  return (
+    <th style={align ? { textAlign: align } : undefined}>
+      <button
+        type="button"
+        className={`th-sort${active ? ' active' : ''}`}
+        onClick={() => onSort(column, nextDir)}
+        title={`Sort by ${label.toLowerCase()}`}
+      >
+        {label}
+        {active
+          ? (sortDir === 'asc' ? <FiChevronUp size={11} /> : <FiChevronDown size={11} />)
+          : <FiChevronDown size={11} className="th-sort-idle" />}
+      </button>
+    </th>
+  );
+}
+
+export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDir, onSort }) {
   return (
     <section className="ops-panel">
       <div className="ops-scroll">
         <table className="table ops-table">
           <thead>
             <tr>
-              <th>Bridge ID / Name</th>
+              <SortHeader column="serial"    label="Bridge ID / Name" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
               <th>Region / Location</th>
               <th>Material Type</th>
-              <th className="num">Chainage</th>
+              <SortHeader column="chainage"  label="Chainage" sortBy={sortBy} sortDir={sortDir} onSort={onSort} align="right" />
               <th className="num">Span / Deck</th>
               <th className="num">Insp.</th>
               <th>Last Inspection</th>
-              <th>Condition Rating</th>
+              <SortHeader column="condition" label="Condition Rating" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
               <th style={{ textAlign: 'right' }}>Operations</th>
             </tr>
           </thead>
           <tbody>
             {bridges.map((bridge) => {
               const lastIns = bridge.inspections?.[0];
-              const cond    = lastIns?.conditionStatus ?? null;
+              const cond    = lastIns?.conditionStatus ?? bridge.currentCondition ?? null;
               const dims    = [
                 bridge.length && `${bridge.length} m`,
                 bridge.width  && `${bridge.width} m`,
@@ -44,7 +68,6 @@ export default function BridgeTable({ bridges, isAdmin, onDelete }) {
                   </td>
 
                   <td>{bridge.section}</td>
-
                   <td className="muted">{bridge.structureType}</td>
 
                   <td className="num">
@@ -52,7 +75,6 @@ export default function BridgeTable({ bridges, isAdmin, onDelete }) {
                   </td>
 
                   <td className="num muted">{dims}</td>
-
                   <td className="num">{bridge._count?.inspections ?? 0}</td>
 
                   <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>

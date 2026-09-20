@@ -2,13 +2,13 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
 import {
-  FiMapPin, FiCalendar, FiUser, FiExternalLink, FiRefreshCw, FiAlertTriangle,
+  FiMapPin, FiExternalLink, FiRefreshCw, FiAlertTriangle,
 } from 'react-icons/fi';
 import { ConditionBadge } from '../ui/Badge';
 import { fmtDate } from '../../utils/format';
 import 'leaflet/dist/leaflet.css';
 
-/* Pin colours must be literal — Leaflet paints to canvas/SVG, not CSS. */
+/* Pin colours must be literal — Leaflet paints to SVG, not through CSS. */
 const PIN = {
   GOOD:        '#16A34A',   // safe
   FAIR:        '#EAB308',   // needs inspection
@@ -23,10 +23,8 @@ const LEGEND = [
   { key: 'UNINSPECTED', cls: 'unknown',  label: 'Uninspected' },
 ];
 
-const conditionOf = (b) => b.inspections?.[0]?.conditionStatus ?? 'UNINSPECTED';
-
-/* Frame all pins on load without hard-coding a centre or zoom.
-   Moving the map is a side effect, so it belongs in an effect, not a memo. */
+/* Frame all pins without hard-coding a centre or zoom. Moving the map is a
+   side effect, so it belongs in an effect. */
 function FitToPins({ points }) {
   const map = useMap();
   useEffect(() => {
@@ -37,19 +35,21 @@ function FitToPins({ points }) {
   return null;
 }
 
-export default function GisHub({ bridges = [], loading, error, onRetry, healthIndex }) {
-  const located = bridges.filter((b) => b.northing && b.easting);
-  const points  = located.map((b) => [Number(b.northing), Number(b.easting)]);
-
-  const counts = bridges.reduce((acc, b) => {
-    const c = conditionOf(b);
-    acc[c] = (acc[c] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const critical = bridges
-    .filter((b) => conditionOf(b) === 'POOR')
-    .slice(0, 6);
+/**
+ * Section B — geospatial tracking.
+ *
+ * Consumes `/api/bridges/positions`: eight columns per located structure
+ * instead of the full inventory record set. Portfolio counts come from the
+ * dashboard aggregate, so they cover every structure — including those with no
+ * coordinates, which by definition cannot appear on the map.
+ */
+export default function GisHub({
+  positions = [], conditionCounts = {}, poorBridges = [], totalBridges = 0,
+  healthIndex, loading, error, onRetry,
+}) {
+  const points = positions.map((p) => [Number(p.northing), Number(p.easting)]);
+  const missingCoords = Math.max(totalBridges - positions.length, 0);
+  const critical = poorBridges.slice(0, 6);
 
   return (
     <div className="gis-grid">
@@ -60,8 +60,8 @@ export default function GisHub({ bridges = [], loading, error, onRetry, healthIn
           <span className="card-title">Geospatial Asset Tracking</span>
           <span className="toolbar">
             <span className="chip">
-              <span className="mono">{located.length}</span>&nbsp;/&nbsp;
-              <span className="mono">{bridges.length}</span>&nbsp;located
+              <span className="mono">{positions.length}</span>&nbsp;/&nbsp;
+              <span className="mono">{totalBridges}</span>&nbsp;located
             </span>
             {onRetry && (
               <button className="btn btn-ghost btn-sm no-print" onClick={onRetry} disabled={loading}>
@@ -84,14 +84,11 @@ export default function GisHub({ bridges = [], loading, error, onRetry, healthIn
               <p>{error}</p>
               {onRetry && <button className="btn btn-primary btn-sm" onClick={onRetry}>Retry</button>}
             </div>
-          ) : located.length === 0 ? (
+          ) : positions.length === 0 ? (
             <div className="empty-state" style={{ height: '100%' }}>
               <FiMapPin />
               <h3>No coordinates recorded</h3>
-              <p>
-                Add northing and easting values to bridge records to plot them on the
-                tracking grid.
-              </p>
+              <p>Add northing and easting values to structure records to plot them on the tracking grid.</p>
               <Link to="/bridges" className="btn btn-secondary btn-sm">Open inventory</Link>
             </div>
           ) : (
@@ -101,51 +98,37 @@ export default function GisHub({ bridges = [], loading, error, onRetry, healthIn
                 attribution="&copy; OpenStreetMap contributors"
               />
               <FitToPins points={points} />
-              {located.map((b) => {
-                const cond  = conditionOf(b);
-                const color = PIN[cond] ?? PIN.UNINSPECTED;
-                const ins   = b.inspections?.[0];
+              {positions.map((p) => {
+                const color = PIN[p.condition] ?? PIN.UNINSPECTED;
                 return (
                   <CircleMarker
-                    key={b.id}
-                    center={[Number(b.northing), Number(b.easting)]}
-                    radius={cond === 'POOR' ? 11 : 9}
+                    key={p.id}
+                    center={[Number(p.northing), Number(p.easting)]}
+                    radius={p.condition === 'POOR' ? 11 : 9}
                     pathOptions={{ color, fillColor: color, fillOpacity: .85, weight: 2 }}
                   >
                     <Popup minWidth={210}>
                       <div className="map-popup">
                         <div className="map-popup-header">
-                          <span className="map-popup-serial">{b.serialNumber}</span>
-                          <ConditionBadge status={cond} />
+                          <span className="map-popup-serial">{p.serialNumber}</span>
+                          <ConditionBadge status={p.condition} />
                         </div>
-                        {b.section && (
+                        {p.bridgeName && (
+                          <div className="map-popup-row"><span>{p.bridgeName}</span></div>
+                        )}
+                        {p.section && (
                           <div className="map-popup-row">
                             <FiMapPin size={11} />
                             <span>
-                              {b.section}
-                              {b.chainage != null ? ` — Km ${Number(b.chainage).toFixed(3)}` : ''}
+                              {p.section}
+                              {p.chainage != null ? ` — Km ${Number(p.chainage).toFixed(3)}` : ''}
                             </span>
                           </div>
                         )}
-                        {b.structureType && (
-                          <div className="map-popup-row">
-                            <span className="label-tech">Type</span>
-                            <span>{b.structureType}</span>
-                          </div>
+                        {p.structureType && (
+                          <div className="map-popup-row"><span className="muted">{p.structureType}</span></div>
                         )}
-                        {ins?.inspectionDate && (
-                          <div className="map-popup-row">
-                            <FiCalendar size={11} />
-                            <span>{fmtDate(ins.inspectionDate)}</span>
-                          </div>
-                        )}
-                        {ins?.inspectorName && (
-                          <div className="map-popup-row">
-                            <FiUser size={11} />
-                            <span>{ins.inspectorName}</span>
-                          </div>
-                        )}
-                        <Link to={`/bridges/${b.id}`} className="map-popup-link">
+                        <Link to={`/bridges/${p.id}`} className="map-popup-link">
                           <FiExternalLink size={11} /> Open structure profile
                         </Link>
                       </div>
@@ -162,7 +145,7 @@ export default function GisHub({ bridges = [], loading, error, onRetry, healthIn
             <span key={key} className="gis-legend-item">
               <span className={`gis-pin ${cls}`} />
               {label}
-              <span className="gis-legend-count">{counts[key] ?? 0}</span>
+              <span className="gis-legend-count">{conditionCounts[key] ?? 0}</span>
             </span>
           ))}
         </div>
@@ -181,23 +164,23 @@ export default function GisHub({ bridges = [], loading, error, onRetry, healthIn
             </div>
             <div className="gis-stat-row">
               <span className="k"><span className="gis-pin safe" /> Safe</span>
-              <span className="v">{counts.GOOD ?? 0}</span>
+              <span className="v">{conditionCounts.GOOD ?? 0}</span>
             </div>
             <div className="gis-stat-row">
               <span className="k"><span className="gis-pin watch" /> Needs inspection</span>
-              <span className="v">{counts.FAIR ?? 0}</span>
+              <span className="v">{conditionCounts.FAIR ?? 0}</span>
             </div>
             <div className="gis-stat-row">
               <span className="k"><span className="gis-pin critical" /> Critical</span>
-              <span className="v">{counts.POOR ?? 0}</span>
+              <span className="v">{conditionCounts.POOR ?? 0}</span>
             </div>
             <div className="gis-stat-row">
               <span className="k"><span className="gis-pin unknown" /> Uninspected</span>
-              <span className="v">{counts.UNINSPECTED ?? 0}</span>
+              <span className="v">{conditionCounts.UNINSPECTED ?? 0}</span>
             </div>
             <div className="gis-stat-row">
               <span className="k">Missing coordinates</span>
-              <span className="v">{bridges.length - located.length}</span>
+              <span className="v">{missingCoords}</span>
             </div>
           </div>
         </div>

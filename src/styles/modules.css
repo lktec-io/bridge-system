@@ -742,6 +742,34 @@
 .spark-bar { flex: 1; min-height: 1px; background: var(--border-strong); border-radius: 1px; }
 .spark-bar.hot { background: var(--accent); }
 
+/* ══════════════════════════════════════════════════════════
+   SYSTEM LOGS — audit trail change summary
+   ══════════════════════════════════════════════════════════ */
+.log-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.log-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+  overflow: hidden;
+}
+.log-change-key   { color: var(--text-muted); font-weight: 700; }
+.log-change-old   { color: var(--poor); text-decoration: line-through; opacity: .75; }
+.log-change-arrow { color: var(--text-light); }
+.log-change-new   { color: var(--text-strong); font-weight: 650; }
+
 /* Not-instrumented notice */
 .stub-notice {
   display: flex; flex-direction: column; gap: var(--sp-2);

@@ -18,6 +18,7 @@ import dashboardRoutes    from './routes/dashboardRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import maintenanceRoutes  from './routes/maintenanceRoutes.js';
 import sensorRoutes       from './routes/sensorRoutes.js';
+import historyRoutes      from './routes/historyRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -87,6 +88,7 @@ app.use('/api/dashboard',      apiLimiter,  dashboardRoutes);
 app.use('/api/notifications',  apiLimiter,  notificationRoutes);
 app.use('/api/maintenance',    apiLimiter,  maintenanceRoutes);
 app.use('/api/sensors',        apiLimiter,  sensorRoutes);
+app.use('/api/history',        apiLimiter,  historyRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({

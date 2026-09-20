@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import {
   FiGrid, FiDatabase, FiClipboard, FiTool, FiActivity,
-  FiAlertTriangle, FiMap, FiUsers, FiX, FiLogOut,
+  FiAlertTriangle, FiMap, FiUsers, FiFileText, FiX, FiLogOut,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -27,6 +27,15 @@ const NAV_GROUPS = [
   },
 ];
 
+/* System Logs is read-only and available to every operator — an audit trail
+   only deters if the people doing the work can see it. */
+const NAV_RECORDS = {
+  title: 'Records',
+  items: [
+    { to: '/logs', icon: FiFileText, label: 'System Logs', end: true },
+  ],
+};
+
 const NAV_ADMIN = {
   title: 'Administration',
   items: [
@@ -42,7 +51,9 @@ export default function Sidebar({ open, onClose }) {
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?';
 
-  const groups = isAdmin ? [...NAV_GROUPS, NAV_ADMIN] : NAV_GROUPS;
+  const groups = isAdmin
+    ? [...NAV_GROUPS, NAV_RECORDS, NAV_ADMIN]
+    : [...NAV_GROUPS, NAV_RECORDS];
   let rowIndex = 0;
 
   const badgeFor = (key) => {

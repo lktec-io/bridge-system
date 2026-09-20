@@ -52,7 +52,7 @@ export const updateMaintenance = asyncHandler(async (req, res) => {
 });
 
 export const deleteMaintenance = asyncHandler(async (req, res) => {
-  const removed = await maintenanceService.deleteMaintenance(Number(req.params.id));
+  const removed = await maintenanceService.deleteMaintenance(Number(req.params.id), req.user?.id);
   if (!removed) return res.status(404).json({ message: 'Maintenance record not found' });
   res.json({ message: 'Maintenance record deleted' });
 });
