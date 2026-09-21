@@ -4,7 +4,11 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Anchor scrolling clears the fixed header */
+  scroll-padding-top: calc(var(--header-h) + var(--sp-4));
+}
 
 body {
   font-family: var(--font);
@@ -18,40 +22,57 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Headings — tight, technical, never oversized ─────────── */
+/* ── Headings — technical, tightly tracked ────────────────── */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-strong);
   font-weight: 650;
   line-height: var(--lh-tight);
-  letter-spacing: -.01em;
+  letter-spacing: -.015em;
 }
-h1 { font-size: var(--fs-xl); }
-h2 { font-size: var(--fs-lg); }
-h3 { font-size: var(--fs-md); }
-h4 { font-size: var(--fs-base); }
-h5, h6 { font-size: var(--fs-sm); }
+h1 { font-size: var(--fs-2xl); font-weight: 700; }
+h2 { font-size: var(--fs-xl); font-weight: 700; }
+h3 { font-size: var(--fs-lg); }
+h4 { font-size: var(--fs-md); }
+h5 { font-size: var(--fs-base); }
+h6 { font-size: var(--fs-sm); }
 
 p { line-height: var(--lh-base); }
 
-/* ── Links — structural, underline on intent ──────────────── */
+/* ── Links ────────────────────────────────────────────────── */
 a {
   color: var(--primary);
   text-decoration: none;
   font-weight: 550;
   transition: color var(--transition);
 }
-a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 2px; }
-
+a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
 [data-theme="dark"] a:hover { color: var(--accent); }
 
-/* ── Data / measurement typography ────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   ENGINEERING DATA TYPOGRAPHY
+   Coordinates, chainage, ratings and measurements are set in
+   tabular mono so digits align down a column and decimals can
+   be compared at a glance.
+   ══════════════════════════════════════════════════════════ */
 .mono,
 .metric,
 .coord,
 .measure {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'zero' 1, 'ss01' 1;
   letter-spacing: -.02em;
+}
+
+/* Large readout — KPI values, sensor readings */
+.readout {
+  font-family: var(--font-mono);
+  font-size: var(--fs-metric);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--track-metric);
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Uppercase technical label */
@@ -61,11 +82,12 @@ a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-
   text-transform: uppercase;
   letter-spacing: var(--track-micro);
   color: var(--text-muted);
+  line-height: 1.4;
 }
 
-.muted      { color: var(--text-muted); }
+.muted       { color: var(--text-muted); }
 .text-strong { color: var(--text-strong); }
-.nowrap     { white-space: nowrap; }
+.nowrap      { white-space: nowrap; }
 
 /* Truncate long engineering text without overlapping */
 .truncate {
@@ -93,7 +115,7 @@ table { border-collapse: collapse; width: 100%; }
 *:focus { outline: none; }
 *:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
 input:focus-visible,
@@ -104,15 +126,15 @@ textarea:focus-visible {
   box-shadow: var(--ring);
 }
 
-::selection { background: rgba(249, 115, 22, .22); color: var(--text-strong); }
+::selection { background: var(--accent-glow); color: var(--text-strong); }
 
 /* ── Scrollbars — thin and industrial ─────────────────────── */
-::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--bg-sunken); }
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  border-radius: 0;
   border: 2px solid var(--bg-sunken);
+  border-radius: var(--radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
@@ -124,5 +146,24 @@ textarea:focus-visible {
     animation-duration: .001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .001ms !important;
+  }
+}
+
+/* ── Fluid down-scale on small screens ────────────────────── */
+@media (max-width: 600px) {
+  :root {
+    --fs-base:      14.5px;
+    --fs-lg:        18px;
+    --fs-xl:        21px;
+    --fs-2xl:       24px;
+    --fs-metric:    30px;
+    --pad-panel:       18px;
+    --pad-panel-tight: 14px;
+    --pad-head:        14px 18px;
+    --page-pad-x:      16px;
+    --page-pad-y:      18px;
+    --cell-x:          14px;
+    --cell-y:          14px;
+    --gap-grid:        12px;
   }
 }

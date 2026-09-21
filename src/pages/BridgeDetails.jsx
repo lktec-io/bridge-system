@@ -317,39 +317,47 @@ export default function BridgeDetails() {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: 20 }}>
+          <div className="tile" style={{ marginBottom: 'var(--sp-6)' }}>
             <div className="card-header"><div className="card-title">Current Condition Summary</div></div>
             <div className="card-body">
               {latestIns ? (
-                <div className="bd-grid-3col">
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 8 }}>Condition</div>
-                    <ConditionBadge status={latestIns.conditionStatus} />
+                <div className="detail-grid">
+                  <div className="detail-field">
+                    <span className="label-tech">Condition rating</span>
+                    <div style={{ marginTop: 4 }}><ConditionBadge status={latestIns.conditionStatus} /></div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 8 }}>Last Inspection</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>by {latestIns.inspectorName}</div>
+                  <div className="detail-field">
+                    <span className="label-tech">Last inspection</span>
+                    <strong className="measure">{safeDate(latestIns.inspectionDate, 'dd MMM yyyy')}</strong>
+                    <span className="muted" style={{ fontSize: 'var(--fs-xs)' }}>
+                      by {latestIns.inspectorName}
+                    </span>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .5, color: 'var(--text-muted)', marginBottom: 8 }}>Defects Status</div>
-                    {latestIns.defectDescription
-                      ? latestIns.isResolved
-                        ? <span className="resolve-status resolved"><MdCheckCircle size={13} /> Resolved</span>
-                        : <span className="resolve-status unresolved"><MdWarning size={13} /> Unresolved</span>
-                      : <span style={{ fontSize: 13, color: 'var(--success)' }}>No defects reported</span>
-                    }
+                  <div className="detail-field">
+                    <span className="label-tech">Defect status</span>
+                    <div style={{ marginTop: 4 }}>
+                      {latestIns.defectDescription
+                        ? latestIns.isResolved
+                          ? <span className="resolve-status resolved"><MdCheckCircle size={14} /> Signed off</span>
+                          : <span className="resolve-status unresolved"><MdWarning size={14} /> Unresolved</span>
+                        : <span className="resolve-status resolved"><MdCheckCircle size={14} /> No defects reported</span>
+                      }
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  <MdWarning style={{ color: 'var(--warning)', fontSize: 24 }} />
-                  <div>
-                    <p style={{ fontWeight: 600 }}>No inspections recorded</p>
-                    <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>This bridge has not been inspected yet.</p>
+                <div style={{ display: 'flex', gap: 'var(--sp-5)', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <MdWarning style={{ color: 'var(--fair)', fontSize: 28, flexShrink: 0 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontWeight: 650, color: 'var(--text-strong)', fontSize: 'var(--fs-md)' }}>
+                      No inspections recorded
+                    </p>
+                    <p className="muted" style={{ fontSize: 'var(--fs-sm)', marginTop: 2 }}>
+                      This structure has never been inspected.
+                    </p>
                   </div>
                   <Link to={`/bridges/${id}/inspections/new`} className="btn btn-primary btn-sm no-print" style={{ marginLeft: 'auto' }}>
-                    <MdAdd /> Add First Inspection
+                    <MdAdd /> File first inspection
                   </Link>
                 </div>
               )}

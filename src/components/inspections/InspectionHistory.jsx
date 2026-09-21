@@ -34,7 +34,7 @@ const safeDate = (d, fmt) => {
 
 export default function InspectionHistory({ logs = [] }) {
   if (logs.length === 0) {
-    return <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No history recorded.</p>;
+    return <p style={{ color: 'var(--text-muted)', fontSize: 'var(--fs-sm)' }}>No history recorded.</p>;
   }
 
   return (
@@ -50,7 +50,7 @@ export default function InspectionHistory({ logs = [] }) {
                 <p>By {log.user.firstName} {log.user.lastName}</p>
               )}
               {log.newValues && Object.keys(log.newValues).length > 0 && (
-                <p style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>
+                <p style={{ fontSize: 'var(--fs-xs)', color: 'var(--text-light)', marginTop: 4 }}>
                   Fields: {Object.keys(log.newValues).join(', ')}
                 </p>
               )}

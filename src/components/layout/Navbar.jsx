@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useRef, useState, useEffect, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  FiMenu, FiX, FiBell, FiLogOut, FiSun, FiMoon,
-  FiAlertCircle, FiAlertTriangle, FiInfo, FiCheck,
+  FiMenu, FiX, FiBell, FiLogOut, FiSun, FiMoon, FiSearch,
+  FiAlertCircle, FiAlertTriangle, FiInfo, FiCheck, FiActivity,
 } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -36,24 +36,25 @@ function resolvePageMeta(pathname) {
 }
 
 const NOTIF_ICON = {
-  danger:  <FiAlertCircle   size={13} />,
-  warning: <FiAlertTriangle size={13} />,
-  info:    <FiInfo          size={13} />,
+  danger:  <FiAlertCircle   size={14} />,
+  warning: <FiAlertTriangle size={14} />,
+  info:    <FiInfo          size={14} />,
 };
 
 /* Backend emits domain event types; map them to a severity channel. */
 const SEVERITY = {
   INSPECTION_POOR:     'danger',
   BRIDGE_DELETED:      'danger',
+  SENSOR_THRESHOLD:    'danger',
   MAINTENANCE_OVERDUE: 'warning',
   INSPECTION_OVERDUE:  'warning',
-  SENSOR_THRESHOLD:    'warning',
   INSPECTION_RESOLVED: 'info',
   BRIDGE_CREATED:      'info',
   MAINTENANCE_LOGGED:  'info',
 };
 
-const severityOf = (n) => SEVERITY[n.type] ?? (['danger', 'warning', 'info'].includes(n.type) ? n.type : 'info');
+const severityOf = (n) =>
+  SEVERITY[n.type] ?? (['danger', 'warning', 'info'].includes(n.type) ? n.type : 'info');
 
 const NOTIF_COLOR = {
   danger:  'var(--poor)',
@@ -73,13 +74,16 @@ function timeAgo(ts) {
 
 export default function Navbar({ onMenuClick, sidebarOpen }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { notifications, unreadCount, markAllRead, markRead, isRead } = useNotifications();
   const { title, subtitle } = resolvePageMeta(pathname);
 
   const [notifOpen, setNotifOpen] = useState(false);
-  const notifRef = useRef(null);
+  const [query, setQuery] = useState('');
+  const notifRef  = useRef(null);
+  const searchRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
@@ -93,13 +97,46 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
     };
   }, []);
 
-  // Close the panel on Escape for keyboard operators
   useEffect(() => {
-    if (!notifOpen) return;
+    if (!notifOpen) return undefined;
     const onKey = (e) => { if (e.key === 'Escape') setNotifOpen(false); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [notifOpen]);
+
+  /* "/" focuses the search, the way a terminal operator expects. Ignored while
+     the caret is already in a field so it never eats a typed slash. */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
+  const submitSearch = (e) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    // Hands the term to the inventory's server-side search
+    navigate(`/bridges?search=${encodeURIComponent(q)}`);
+    searchRef.current?.blur();
+  };
+
+  /* System health reflects unread signals: a critical event type outranks a
+     plain backlog, and no unread signals reads as nominal. */
+  const health = useMemo(() => {
+    const unread = notifications.filter((n) => !isRead(n.id));
+    if (unread.some((n) => severityOf(n) === 'danger')) {
+      return { cls: 'crit', label: `${unread.length} critical` };
+    }
+    if (unread.length > 0) return { cls: 'warn', label: `${unread.length} signal${unread.length === 1 ? '' : 's'}` };
+    return { cls: 'ok', label: 'Nominal' };
+  }, [notifications, isRead]);
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
@@ -114,15 +151,34 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
 
       <div className="topbar-left">
         <button className="hamburger" onClick={onMenuClick} aria-label="Toggle navigation">
-          {sidebarOpen ? <FiX size={19} /> : <FiMenu size={19} />}
+          {sidebarOpen ? <FiX size={21} /> : <FiMenu size={21} />}
         </button>
+
         <div style={{ minWidth: 0 }}>
           <div className="topbar-title">{title}</div>
           {subtitle && <div className="topbar-subtitle">{subtitle}</div>}
         </div>
+
+        <form className="topbar-search" onSubmit={submitSearch} role="search">
+          <FiSearch size={16} />
+          <input
+            ref={searchRef}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search structures…"
+            aria-label="Search structures"
+          />
+          {!query && <kbd>/</kbd>}
+        </form>
       </div>
 
       <div className="topbar-right">
+
+        <span className={`health-pill ${health.cls}`} title="System health">
+          <FiActivity size={13} />
+          {health.label}
+        </span>
 
         <button
           className="navbar-icon-btn"
@@ -130,7 +186,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
           title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          {isDark ? <FiSun size={16} /> : <FiMoon size={16} />}
+          {isDark ? <FiSun size={18} /> : <FiMoon size={18} />}
         </button>
 
         <div className="notif-wrapper" ref={notifRef}>
@@ -141,7 +197,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
             aria-label="Notifications"
             aria-expanded={notifOpen}
           >
-            <FiBell size={16} />
+            <FiBell size={18} />
             {unreadCount > 0 && (
               <span className="bell-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
             )}
@@ -156,7 +212,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
                 </span>
                 {unreadCount > 0 && (
                   <button className="notif-mark-all" onClick={markAllRead}>
-                    <FiCheck size={11} /> Mark all read
+                    <FiCheck size={12} /> Mark all read
                   </button>
                 )}
               </div>
@@ -164,7 +220,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
               <div className="notif-list">
                 {notifications.length === 0 ? (
                   <div className="notif-empty">
-                    <FiBell size={22} style={{ opacity: .25 }} />
+                    <FiBell size={26} style={{ opacity: .25 }} />
                     <span>No active signals</span>
                   </div>
                 ) : (
@@ -210,7 +266,7 @@ export default function Navbar({ onMenuClick, sidebarOpen }) {
           title="Sign out"
           aria-label="Sign out"
         >
-          <FiLogOut size={16} />
+          <FiLogOut size={18} />
         </button>
 
       </div>

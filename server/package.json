@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrate": "node scripts/migrate.js",
+    "migrate:status": "node scripts/migrate.js --status",
+    "migrate:dry": "node scripts/migrate.js --dry-run",
+    "migrate:verify": "node scripts/migrate.js --verify",
+    "test:migrate": "node scripts/migrate.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

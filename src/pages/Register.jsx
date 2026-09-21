@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiAlertCircle, FiShield, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import AuthBackdrop from '../components/auth/AuthBackdrop';
 
 const initial = {
   firstName: '', lastName: '', email: '',
@@ -48,9 +49,14 @@ export default function Register() {
 
   return (
     <div className="auth-page">
-      <div className="auth-bg" aria-hidden="true" />
+      <AuthBackdrop />
 
-      <div className="auth-card" style={{ maxWidth: 520 }}>
+      <main className="auth-card" style={{ maxWidth: 580 }}>
+
+        <div className="auth-classification">
+          <span>Account provisioning</span>
+          <span className="secure"><FiShield size={12} /> Authorisation required</span>
+        </div>
 
         <div className="auth-logo">
           <div className="auth-logo-icon" aria-hidden="true">
@@ -71,10 +77,11 @@ export default function Register() {
 
         <div className="auth-hr" />
 
-        <div className="auth-form-title">Request operator access</div>
-        <div className="auth-form-subtitle">
-          Accounts carry write access to structural records. Only create one with authorisation.
-        </div>
+        <h2 className="auth-form-title">Request operator access</h2>
+        <p className="auth-form-subtitle">
+          Operator accounts carry write access to structural records and inspection
+          history. Only create one with the authorisation to do so.
+        </p>
 
         {error && (
           <div className="alert alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
@@ -140,25 +147,25 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="alert alert-info" style={{ marginBottom: 'var(--sp-4)' }}>
-            <FiShield size={15} style={{ flexShrink: 0 }} />
-            <span>
-              Every create, update, resolution and deletion is written to the audit trail
-              against your account.
-            </span>
-          </div>
-
           <button type="submit" className="btn auth-submit-btn" disabled={loading}>
             {loading
               ? <><span className="spinner spinner-sm" /> Creating account…</>
-              : <>Create account <FiArrowRight size={14} /></>}
+              : <>Create account <FiArrowRight size={17} /></>}
           </button>
         </form>
+
+        <div className="auth-notice">
+          <FiShield size={15} />
+          <span>
+            Every create, update, approval and deletion is written to the audit trail
+            against this account.
+          </span>
+        </div>
 
         <div className="auth-footer">
           Already have an account? <Link to="/login">Sign in</Link>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
