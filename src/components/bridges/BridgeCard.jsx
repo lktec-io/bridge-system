@@ -9,7 +9,6 @@ export default function BridgeCard({ bridge, isAdmin, onDelete }) {
   const lastIns    = bridge.inspections?.[0];
   const cond       = lastIns?.conditionStatus ?? null;
   const unresolved = bridge.inspections?.filter((i) => i.defectDescription && !i.isResolved).length ?? 0;
-
   return (
     <article className={`bridge-card ${condClass(cond)}`}>
 
