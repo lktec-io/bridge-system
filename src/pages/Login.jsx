@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   FiMail, FiLock, FiAlertCircle, FiEye, FiEyeOff, FiArrowRight, FiShield,
 } from 'react-icons/fi';
@@ -203,8 +203,15 @@ export default function Login() {
             </span>
           </div>
 
-          <div className="auth-footer">
-            Need an operator account? <Link to="/register">Request access</Link>
+          {/* No self-registration path: access is limited to provisioned
+              operators. Accounts are created by an administrator under
+              System Admin, never from this screen. */}
+          <div className="auth-restricted">
+            <FiLock size={13} />
+            <span>
+              Restricted to active asset operators. Accounts are provisioned by the
+              Asset Management Directorate.
+            </span>
           </div>
         </div>
       </main>

@@ -65,6 +65,11 @@
   border-right: 1px solid rgba(255, 255, 255, .06);
   overflow-y: auto;
   overflow-x: hidden;
+  /* Scrolling the drawer must not chain to the page behind it, and it must
+     clear the home indicator on notched devices. */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   transition: transform var(--transition-slow);
 }
 
@@ -466,9 +471,17 @@
 @media (max-width: 1024px) {
   :root { --sidebar-w: 0px; }
 
-  .sidebar { width: 286px; transform: translateX(-288px); }
+  /* Never wider than the viewport it slides over — at 320px the drawer is
+     282px and still shows a strip of the dimmed page behind it. */
+  .sidebar {
+    width: min(286px, 88vw);
+    transform: translateX(-102%);
+  }
   .sidebar.open { transform: none; box-shadow: 4px 0 32px rgba(0, 0, 0, .45); }
   .sidebar-close-btn { display: flex; }
+
+  /* Rows keep their full 48px barrier in the drawer */
+  .nav-link { min-height: var(--nav-row-h); }
 
   .main-content { margin-left: 0; }
   .topbar { left: 0; }

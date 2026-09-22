@@ -5,11 +5,12 @@
 /* ══════════════════════════════════════════════════════════
    COMMAND STRIP — page-level context bar
    ══════════════════════════════════════════════════════════ */
+/* MOBILE FIRST: stacks by default, becomes a row from 601px up. */
 .command-strip {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-6);
-  padding: var(--sp-6) var(--pad-panel);
-  margin-bottom: var(--sp-6);
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--pad-panel);
+  margin-bottom: var(--sp-5);
   background: var(--bg-structure);
   border: 1px solid var(--navy-700);
   border-left: 4px solid var(--accent);
@@ -42,7 +43,19 @@
   color: rgba(226, 232, 240, .58);
 }
 .command-strip-meta .sep { color: rgba(226, 232, 240, .22); }
-.command-strip-right { display: flex; align-items: center; gap: var(--sp-3); flex-shrink: 0; }
+.command-strip-right { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.command-strip-right > * { flex: 1 1 auto; justify-content: center; min-height: 48px; }
+
+@media (min-width: 601px) {
+  .command-strip {
+    flex-direction: row; align-items: center; justify-content: space-between;
+    gap: var(--sp-6);
+    padding: var(--sp-6) var(--pad-panel);
+    margin-bottom: var(--sp-6);
+  }
+  .command-strip-right { flex-shrink: 0; flex-wrap: nowrap; }
+  .command-strip-right > * { flex: 0 0 auto; }
+}
 
 .btn-strip {
   display: inline-flex; align-items: center; gap: var(--sp-2);
@@ -64,12 +77,17 @@
 /* ══════════════════════════════════════════════════════════
    SECTION A — KPI STRUCTURAL BLOCKS
    ══════════════════════════════════════════════════════════ */
+/* MOBILE FIRST: one metric per row — nothing squeezed, nothing clipped.
+   Two up from 601px, four up on wide desktop. */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap-grid);
   margin-bottom: var(--sp-6);
 }
+
+@media (min-width: 601px)  { .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1240px) { .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .kpi-block {
   position: relative;
@@ -77,7 +95,6 @@
   flex-direction: column;
   gap: var(--sp-4);
   padding: var(--pad-panel);
-  min-height: 168px;
   min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -87,6 +104,9 @@
   transition: box-shadow var(--transition), transform var(--transition);
 }
 .kpi-block:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+
+/* Equal-height tiles only once they sit side by side */
+@media (min-width: 601px) { .kpi-block { min-height: 168px; } }
 
 .kpi-block.is-accent   { border-top-color: var(--accent); }
 .kpi-block.is-good     { border-top-color: var(--good); }
@@ -174,11 +194,17 @@
 /* ══════════════════════════════════════════════════════════
    SECTION B — GIS / DIGITAL TWIN HUB
    ══════════════════════════════════════════════════════════ */
+/* MOBILE FIRST: viewport above, side rail below; split only when there is
+   room for a 320px rail without crushing the map. */
 .gis-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap-grid);
   margin-bottom: var(--sp-6);
+}
+
+@media (min-width: 1100px) {
+  .gis-grid { grid-template-columns: minmax(0, 2.2fr) minmax(320px, 1fr); }
 }
 
 .gis-hub {
@@ -203,9 +229,11 @@
 .gis-viewport {
   position: relative;
   width: 100%;
-  height: clamp(380px, 48vh, 560px);
+  height: clamp(300px, 42vh, 380px);
   background: var(--bg-inset);
 }
+
+@media (min-width: 601px) { .gis-viewport { height: clamp(380px, 48vh, 560px); } }
 .gis-viewport .leaflet-container {
   width: 100%; height: 100%;
   background: var(--bg-inset);
@@ -340,14 +368,22 @@
 /* ══════════════════════════════════════════════════════════
    LEGACY STAT CARDS (kept for any view still using them)
    ══════════════════════════════════════════════════════════ */
+/* MOBILE FIRST: single column, widening in steps. */
 .stats-grid,
 .stats-grid-6 {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap-grid);
   margin-bottom: var(--sp-6);
 }
-.stats-grid   { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.stats-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+@media (min-width: 601px) {
+  .stats-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stats-grid-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px)  { .stats-grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .stats-grid   { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1500px) { .stats-grid-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
 .stat-card {
   display: flex; align-items: flex-start; gap: var(--sp-4);
@@ -400,19 +436,26 @@
 /* ══════════════════════════════════════════════════════════
    PANELS ROW / TREND / ACTIVITY / DISTRIBUTION
    ══════════════════════════════════════════════════════════ */
+/* MOBILE FIRST: analytics panels stack; pair up on wide screens. */
 .dashboard-panels {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--gap-grid);
   margin-bottom: var(--sp-6);
   align-items: start;
 }
 
+@media (min-width: 1100px) {
+  .dashboard-panels { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); }
+}
+
 /* Inspection throughput — vertical measurement bars */
 .trend-chart {
-  display: flex; align-items: flex-end; gap: var(--sp-3);
-  height: 200px;
+  display: flex; align-items: flex-end; gap: var(--sp-2);
+  height: 160px;
 }
+
+@media (min-width: 601px) { .trend-chart { gap: var(--sp-3); height: 200px; } }
 .trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); min-width: 0; height: 100%; }
 .trend-bar-wrap {
   flex: 1;
@@ -514,27 +557,40 @@
 .pie-count { font-family: var(--font-mono); font-size: var(--fs-md); font-weight: 700; color: var(--text-strong); }
 
 /* ══════════════════════════════════════════════════════════
-   RESPONSIVE — dashboard
+   MOBILE-FIRST ADJUSTMENTS
+   Grid definitions now live with their components as min-width
+   enhancements. What remains here are genuinely small-screen
+   concerns: touch barriers and breathing room.
    ══════════════════════════════════════════════════════════ */
-@media (max-width: 1500px) {
-  .stats-grid-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (max-width: 1240px) {
-  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gis-grid { grid-template-columns: minmax(0, 1fr); }
-  .dashboard-panels { grid-template-columns: minmax(0, 1fr); }
-  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 640px) {
-  .kpi-grid { grid-template-columns: minmax(0, 1fr); }
-  .stats-grid, .stats-grid-6 { grid-template-columns: minmax(0, 1fr); }
-  .kpi-block { min-height: 0; }
-  .command-strip { flex-direction: column; align-items: stretch; }
-  .command-strip-right { justify-content: stretch; }
-  .command-strip-right > * { flex: 1; justify-content: center; }
-  .gis-viewport { height: clamp(300px, 42vh, 380px); }
-  .trend-chart { height: 160px; }
+@media (max-width: 600px) {
+  /* Distribution chart centres instead of stretching its legend thin */
   .pie-layout { gap: var(--sp-5); justify-content: center; }
+  .pie-legend { min-width: 0; width: 100%; }
+  .pie-legend-row { min-height: 48px; }          /* touch barrier */
+
+  /* Ledger rows and watchlist entries get real tap targets */
+  .gis-stat-row { min-height: 48px; }
+  .watch-item   { min-height: 56px; }
+  .activity-item { padding: var(--sp-4); }
+
+  /* The GIS toolbar's chip + sync button wrap rather than overflow */
+  .gis-toolbar { gap: var(--sp-3); }
+  .gis-toolbar .toolbar { width: 100%; justify-content: space-between; }
+
+  /* Legend reads as two dense columns instead of one long strip */
+  .gis-legend {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-3) var(--sp-4);
+  }
+
+  /* Operations header stacks its title and link */
+  .ops-head { gap: var(--sp-3); }
+  .ops-head > .btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 400px) {
+  .gis-legend { grid-template-columns: minmax(0, 1fr); }
+  .kpi-value { font-size: var(--fs-metric); }
+  .command-strip { padding: var(--sp-4) var(--sp-4); }
 }

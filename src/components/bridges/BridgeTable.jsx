@@ -5,6 +5,10 @@ import {
 import { ConditionBadge } from '../ui/Badge';
 import { fmtDate } from '../../utils/format';
 
+/* Colour-coded rule for the stacked mobile blocks. Presentation only. */
+const condClass = (s) =>
+  ({ GOOD: 'cond-good', FAIR: 'cond-fair', POOR: 'cond-poor' })[s] ?? 'cond-none';
+
 /** Header cell that requests a server-side sort. */
 function SortHeader({ column, label, sortBy, sortDir, onSort, align }) {
   const active = sortBy === column;
@@ -58,7 +62,10 @@ export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDi
               ].filter(Boolean).join(' × ') || '—';
 
               return (
-                <tr key={bridge.id} className={cond === 'POOR' ? 'row-poor' : ''}>
+                <tr
+                  key={bridge.id}
+                  className={`${condClass(cond)}${cond === 'POOR' ? ' row-poor' : ''}`}
+                >
                   <td data-label="Bridge ID">
                     <Link to={`/bridges/${bridge.id}`} className="serial-link">
                       {bridge.serialNumber}

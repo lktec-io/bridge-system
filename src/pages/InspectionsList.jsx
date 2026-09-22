@@ -12,6 +12,10 @@ import { fmtDate } from '../utils/format';
 
 const EMPTY_FILTERS = { search: '', condition: '', resolved: '' };
 
+/* Colour-coded rule for the stacked mobile blocks. Presentation only. */
+const condClass = (s) =>
+  ({ GOOD: 'cond-good', FAIR: 'cond-fair', POOR: 'cond-poor' })[s] ?? 'cond-none';
+
 export default function InspectionsList() {
   const { user, isAdmin } = useAuth();
 
@@ -207,7 +211,10 @@ export default function InspectionsList() {
                 {filtered.map((ins) => {
                   const openDefect = Boolean(ins.defectDescription) && !ins.isResolved;
                   return (
-                    <tr key={ins.id} className={ins.conditionStatus === 'POOR' ? 'row-poor' : ''}>
+                    <tr
+                      key={ins.id}
+                      className={`${condClass(ins.conditionStatus)}${ins.conditionStatus === 'POOR' ? ' row-poor' : ''}`}
+                    >
                       <td className="mono" style={{ fontSize: 'var(--fs-xs)' }} data-label="Date">
                         {fmtDate(ins.inspectionDate)}
                       </td>

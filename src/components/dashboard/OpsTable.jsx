@@ -5,6 +5,11 @@ import {
 import { ConditionBadge } from '../ui/Badge';
 import { fmtDate } from '../../utils/format';
 
+/* Drives the colour-coded rule on the leading edge of each stacked block
+   below 760px. Presentation only — the rating itself is unchanged. */
+const condClass = (s) =>
+  ({ GOOD: 'cond-good', FAIR: 'cond-fair', POOR: 'cond-poor' })[s] ?? 'cond-none';
+
 /**
  * Section C — data operations table.
  *
@@ -66,7 +71,10 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
               const busy = busyId === ins.id;
 
               return (
-                <tr key={ins.id} className={ins.conditionStatus === 'POOR' ? 'row-poor' : ''}>
+                <tr
+                  key={ins.id}
+                  className={`${condClass(ins.conditionStatus)}${ins.conditionStatus === 'POOR' ? ' row-poor' : ''}`}
+                >
                   <td data-label="Bridge ID">
                     <Link to={`/bridges/${ins.bridgeId}`} className="serial-link">
                       {b.serialNumber ?? `#${ins.bridgeId}`}

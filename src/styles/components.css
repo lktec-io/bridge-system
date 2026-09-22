@@ -228,11 +228,23 @@ textarea.form-control {
 
 .form-hint { margin-top: 6px; font-size: var(--fs-xs); color: var(--text-muted); line-height: var(--lh-snug); }
 
-/* Field grids — linear arrangement, never crammed */
+/* Field grids — MOBILE FIRST: one field per row, pairing up only when
+   there is room for two comfortable columns. */
 .form-row,
-.form-row-3 { display: grid; gap: var(--sp-5); }
-.form-row   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.form-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-row-3 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+@media (min-width: 721px) {
+  .form-row, .form-row-3 { gap: var(--sp-5); }
+  .form-row   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-row-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 901px) {
+  .form-row-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 /* Leading icon / trailing button inside a field */
 .input-wrap { position: relative; display: block; }
@@ -800,7 +812,7 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
    ══════════════════════════════════════════════════════════ */
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: 1px;
   background: var(--border);
   border: 1px solid var(--border);
@@ -948,26 +960,33 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
   }
   .table-stack tr:last-child { margin-bottom: 0; }
 
+  /* Label column is fixed and flush left; the value starts immediately after
+     it. Left-aligned pairs scan far faster in the field than a label pushed
+     left and a value pushed right across a phone's width. */
   .table-stack td {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--sp-4);
-    padding: 11px var(--sp-4);
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    min-height: 44px;
+    padding: 10px var(--sp-4);
     border-bottom: 1px solid var(--border);
     white-space: normal;
     text-align: left;
   }
   .table-stack td:last-child { border-bottom: none; }
 
-  /* The header text follows the cell down as its own label */
+  /* The header text follows the cell down as its own dense label */
   .table-stack td::before {
     content: attr(data-label);
-    flex: 0 0 40%;
+    flex: 0 0 38%;
+    max-width: 140px;
+    padding-right: var(--sp-2);
     font-size: var(--fs-micro);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: var(--track-micro);
+    line-height: 1.5;
     color: var(--text-muted);
   }
   .table-stack td:not([data-label])::before { content: none; }
@@ -975,11 +994,27 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
   /* Numeric columns stop being right-aligned once stacked */
   .table-stack td.num { text-align: left; }
 
-  /* Condition marker moves to the block's leading edge */
-  .table-stack .row-poor td:first-child { box-shadow: none; }
-  .table-stack tr.row-poor { border-left: 4px solid var(--poor); }
+  /* ── Condition rule on the block's leading edge ──────────────
+     Every stacked block carries a 4px colour-coded rule plus a matching
+     indent, so condition is legible before a single word is read. The
+     inset shadow that marked the first cell on desktop is dropped. */
+  .table-stack tr {
+    border-left: 4px solid var(--border-strong);
+    padding-left: 2px;
+  }
+  .table-stack tr.cond-good { border-left-color: var(--good); }
+  .table-stack tr.cond-fair { border-left-color: var(--fair-pin); }
+  .table-stack tr.cond-poor { border-left-color: var(--poor); }
+  .table-stack tr.cond-none { border-left-color: var(--none); }
+
+  .table-stack tr.row-poor     { border-left-color: var(--poor); }
+  .table-stack tr.row-critical { border-left-color: var(--accent); }
+  .table-stack .row-poor td:first-child,
   .table-stack .row-critical td:first-child { box-shadow: none; }
-  .table-stack tr.row-critical { border-left: 4px solid var(--accent); }
+
+  /* The identifier row reads as the block's title */
+  .table-stack td:first-child { background: var(--bg-sunken); }
+  .table-stack td:first-child .serial-link { font-size: var(--fs-md); }
 
   .table-stack .ops-actions,
   .table-stack .users-action-group { justify-content: flex-start; flex-wrap: wrap; }
@@ -992,12 +1027,7 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE — components
    ══════════════════════════════════════════════════════════ */
-@media (max-width: 900px) {
-  .form-row-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 @media (max-width: 720px) {
-  .form-row, .form-row-3 { grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
   .page-header { flex-direction: column; align-items: stretch; gap: var(--sp-4); }
   .page-header .toolbar { width: 100%; }
   .page-header .toolbar > .btn { flex: 1; justify-content: center; }
