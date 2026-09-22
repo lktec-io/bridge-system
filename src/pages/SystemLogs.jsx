@@ -160,7 +160,7 @@ export default function SystemLogs() {
               </span>
             </div>
             <div className="ops-scroll">
-              <table className="table ops-table">
+              <table className="table ops-table table-stack">
                 <thead>
                   <tr>
                     <th>Timestamp</th>
@@ -175,13 +175,13 @@ export default function SystemLogs() {
                     const m = meta(log.actionType);
                     return (
                       <tr key={log.id}>
-                        <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>
+                        <td className="mono" style={{ fontSize: 'var(--fs-xs)' }} data-label="Timestamp">
                           {fmtDateTime(log.createdAt)}
                         </td>
-                        <td>
+                        <td data-label="Event">
                           <span className="badge" style={TONE_STYLE[m.tone]}>{m.label}</span>
                         </td>
-                        <td>
+                        <td data-label="Structure">
                           {log.bridge ? (
                             <Link to={`/bridges/${log.bridgeId}`} className="serial-link">
                               {log.bridge.serialNumber}
@@ -195,10 +195,10 @@ export default function SystemLogs() {
                             <div className="muted" style={{ fontSize: 'var(--fs-micro)' }}>{log.bridge.section}</div>
                           )}
                         </td>
-                        <td className="muted">
+                        <td className="muted" data-label="Operator">
                           {log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System'}
                         </td>
-                        <td className="wrap-cell">
+                        <td className="wrap-cell" data-label="Changes">
                           <ChangeSummary oldValues={log.oldValues} newValues={log.newValues} />
                         </td>
                       </tr>

@@ -10,7 +10,7 @@ import 'leaflet/dist/leaflet.css';
 
 const PIN = {
   GOOD:        '#16A34A',
-  FAIR:        '#EAB308',
+  FAIR:        '#D97706',
   POOR:        '#DC2626',
   UNINSPECTED: '#94A3B8',
 };

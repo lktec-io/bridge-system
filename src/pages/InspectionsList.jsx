@@ -190,7 +190,7 @@ export default function InspectionsList() {
             </span>
           </div>
           <div className="ops-scroll">
-            <table className="table ops-table">
+            <table className="table ops-table table-stack">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -208,16 +208,18 @@ export default function InspectionsList() {
                   const openDefect = Boolean(ins.defectDescription) && !ins.isResolved;
                   return (
                     <tr key={ins.id} className={ins.conditionStatus === 'POOR' ? 'row-poor' : ''}>
-                      <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>{fmtDate(ins.inspectionDate)}</td>
-                      <td>
+                      <td className="mono" style={{ fontSize: 'var(--fs-xs)' }} data-label="Date">
+                        {fmtDate(ins.inspectionDate)}
+                      </td>
+                      <td data-label="Bridge ID">
                         <Link to={`/bridges/${ins.bridgeId}`} className="serial-link">
                           {ins.bridge?.serialNumber ?? `#${ins.bridgeId}`}
                         </Link>
                       </td>
-                      <td className="muted">{ins.bridge?.section ?? '—'}</td>
-                      <td>{ins.inspectorName}</td>
-                      <td><ConditionBadge status={ins.conditionStatus} /></td>
-                      <td>
+                      <td className="muted" data-label="Region">{ins.bridge?.section ?? '—'}</td>
+                      <td data-label="Inspector">{ins.inspectorName}</td>
+                      <td data-label="Condition"><ConditionBadge status={ins.conditionStatus} /></td>
+                      <td data-label="Defect status">
                         {!ins.defectDescription ? (
                           <span className="resolve-status resolved">
                             <FiCheckCircle size={11} /> None
@@ -232,12 +234,12 @@ export default function InspectionsList() {
                           </span>
                         )}
                       </td>
-                      <td className="wrap-cell muted">
+                      <td className="wrap-cell muted" data-label="Defect summary">
                         {ins.defectDescription
                           ? `${ins.defectDescription.slice(0, 90)}${ins.defectDescription.length > 90 ? '…' : ''}`
                           : '—'}
                       </td>
-                      <td>
+                      <td data-label="Operations">
                         <div className="ops-actions no-print">
                           {openDefect ? (
                             <button

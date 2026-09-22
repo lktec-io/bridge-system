@@ -43,129 +43,169 @@ export default function Login() {
 
   return (
     <div className="auth-page">
-      <AuthBackdrop />
 
-      <main className="auth-card">
+      {/* ── Left: structural identity ─────────────────────────── */}
+      <aside className="auth-brandpanel">
+        <AuthBackdrop />
 
-        {/* Classification / terminal strip */}
-        <div className="auth-classification">
-          <span>Terminal {TERMINAL_ID}</span>
-          <span className="secure">
-            <FiShield size={12} /> Secure channel
-          </span>
+        <span className="auth-eyebrow">Infrastructure Terminal</span>
+
+        <div>
+          <h1 className="auth-headline">
+            Structural intelligence
+            <em>for every span.</em>
+          </h1>
+          <p className="auth-sub">
+            Condition ratings, inspection history, geospatial tracking and live
+            telemetry for the managed bridge portfolio — one authoritative record
+            per structure.
+          </p>
+
+          <div className="auth-ledger">
+            <div className="auth-ledger-row">
+              <span className="k">Asset inventory</span>
+              <span className="v">Geometry · GIS</span>
+            </div>
+            <div className="auth-ledger-row">
+              <span className="k">Inspection regime</span>
+              <span className="v">Rated · Audited</span>
+            </div>
+            <div className="auth-ledger-row">
+              <span className="k">Structural telemetry</span>
+              <span className="v">Threshold alarms</span>
+            </div>
+          </div>
         </div>
 
-        {/* Identity */}
-        <div className="auth-logo">
-          <div className="auth-logo-icon" aria-hidden="true">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="square">
-              <path d="M2 17h20" />
-              <path d="M2 17V9" />
-              <path d="M22 17V9" />
-              <path d="M2 12c5-4 15-4 20 0" />
-              <path d="M8 17v-3.4" />
-              <path d="M16 17v-3.4" />
-              <path d="M12 17v-4.6" />
-            </svg>
-          </div>
-          <div className="auth-logo-text">
-            <h1>BMS</h1>
-            <p>Bridge Management System</p>
-          </div>
+        <div className="auth-orgline">
+          <strong>Bridge Management System</strong>
+          Roads &amp; Infrastructure Authority · Asset Management Directorate
         </div>
+      </aside>
 
-        <div className="auth-hr" />
+      {/* ── Right: operator access ────────────────────────────── */}
+      <main className="auth-formpanel">
+        <div className="auth-form">
 
-        <h2 className="auth-form-title">Operator sign in</h2>
-        <p className="auth-form-subtitle">
-          Authorised infrastructure personnel only. Enter your operator credentials to
-          access structural records, inspections and telemetry.
-        </p>
-
-        {error && (
-          <div className="alert alert-error" style={{ marginBottom: 'var(--sp-5)' }} role="alert">
-            <FiAlertCircle size={16} />
-            <span style={{ flex: 1 }}>{error}</span>
+          <div className="auth-classification">
+            <span>Terminal {TERMINAL_ID}</span>
+            <span className="secure">
+              <FiShield size={12} /> Secure channel
+            </span>
           </div>
-        )}
 
-        <form onSubmit={handleSubmit} noValidate>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="email">Email address</label>
-            <div className="input-wrap">
-              <FiMail className="input-leading-icon" size={16} />
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                className="form-control has-leading"
-                placeholder="operator@agency.gov"
-                value={form.email}
-                onChange={handleChange}
-                autoFocus
-              />
+          <div className="auth-logo">
+            <div className="auth-logo-icon" aria-hidden="true">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="square">
+                <path d="M2 17h20" />
+                <path d="M2 17V9" />
+                <path d="M22 17V9" />
+                <path d="M2 12c5-4 15-4 20 0" />
+                <path d="M8 17v-3.4" />
+                <path d="M16 17v-3.4" />
+                <path d="M12 17v-4.6" />
+              </svg>
+            </div>
+            <div className="auth-logo-text">
+              <h1>BMS</h1>
+              <p>Bridge Management System</p>
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
-            <div className="input-wrap">
-              <FiLock className="input-leading-icon" size={16} />
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                className="form-control has-leading"
-                style={{ paddingRight: 56 }}
-                placeholder="••••••••••••"
-                value={form.password}
-                onChange={handleChange}
-              />
-              <button
-                type="button"
-                className="input-trailing-btn"
-                onClick={() => setShowPassword((v) => !v)}
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-              </button>
+          <div className="auth-hr" />
+
+          <h2 className="auth-form-title">Operator sign in</h2>
+          <p className="auth-form-subtitle">
+            Authorised infrastructure personnel only. Credentials are issued by the
+            Asset Management Directorate.
+          </p>
+
+          {error && (
+            <div className="alert alert-error" style={{ marginBottom: 'var(--sp-5)' }} role="alert">
+              <FiAlertCircle size={16} />
+              <span style={{ flex: 1 }}>{error}</span>
             </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate>
+
+            {/* Floating label: input precedes label so CSS can react to
+                :focus and :not(:placeholder-shown) on its sibling. */}
+            <div className="form-group">
+              <div className="field-float has-icon">
+                <FiMail className="input-leading-icon" size={16} />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  className="form-control"
+                  placeholder=" "
+                  value={form.email}
+                  onChange={handleChange}
+                  autoFocus
+                />
+                <label htmlFor="email">Email address</label>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <div className="field-float has-icon has-action">
+                <FiLock className="input-leading-icon" size={16} />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  className="form-control"
+                  placeholder=" "
+                  value={form.password}
+                  onChange={handleChange}
+                />
+                <label htmlFor="password">Password</label>
+                <button
+                  type="button"
+                  className="input-trailing-btn"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="auth-row">
+              <label className="remember-label">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  checked={form.remember}
+                  onChange={handleChange}
+                />
+                <span>Remember this terminal</span>
+              </label>
+              <button type="button" className="forgot-link">Forgot password?</button>
+            </div>
+
+            <button type="submit" className="btn auth-submit-btn" disabled={loading}>
+              {loading
+                ? <><span className="spinner spinner-sm" /> Authenticating…</>
+                : <>Sign in <FiArrowRight size={17} /></>}
+            </button>
+          </form>
+
+          <div className="auth-notice">
+            <FiShield size={15} />
+            <span>
+              Every create, update, approval and deletion is recorded against your
+              account in the system audit trail.
+            </span>
           </div>
 
-          <div className="auth-row">
-            <label className="remember-label">
-              <input
-                type="checkbox"
-                name="remember"
-                checked={form.remember}
-                onChange={handleChange}
-              />
-              <span>Remember this terminal</span>
-            </label>
-            <button type="button" className="forgot-link">Forgot password?</button>
+          <div className="auth-footer">
+            Need an operator account? <Link to="/register">Request access</Link>
           </div>
-
-          <button type="submit" className="btn auth-submit-btn" disabled={loading}>
-            {loading
-              ? <><span className="spinner spinner-sm" /> Authenticating…</>
-              : <>Sign in <FiArrowRight size={17} /></>}
-          </button>
-        </form>
-
-        <div className="auth-notice">
-          <FiShield size={15} />
-          <span>
-            Every create, update, approval and deletion is recorded against your account in
-            the system audit trail.
-          </span>
-        </div>
-
-        <div className="auth-footer">
-          Need an operator account? <Link to="/register">Request access</Link>
         </div>
       </main>
     </div>

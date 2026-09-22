@@ -48,7 +48,7 @@ export default function Register() {
   };
 
   return (
-    <div className="auth-page">
+    <div className="auth-page auth-single">
       <AuthBackdrop />
 
       <main className="auth-card" style={{ maxWidth: 580 }}>

@@ -11,7 +11,7 @@ import 'leaflet/dist/leaflet.css';
 /* Pin colours must be literal — Leaflet paints to SVG, not through CSS. */
 const PIN = {
   GOOD:        '#16A34A',   // safe
-  FAIR:        '#EAB308',   // needs inspection
+  FAIR:        '#D97706',   // needs inspection
   POOR:        '#DC2626',   // critical / structural weakness
   UNINSPECTED: '#94A3B8',
 };

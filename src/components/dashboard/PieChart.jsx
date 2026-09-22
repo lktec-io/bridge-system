@@ -12,7 +12,7 @@ const C  = 2 * Math.PI * R;
    everywhere in the system. */
 const SLICES = [
   { key: 'GOOD',        color: '#16A34A', label: 'Good',        filter: 'GOOD'  },
-  { key: 'FAIR',        color: '#EAB308', label: 'Fair',        filter: 'FAIR'  },
+  { key: 'FAIR',        color: '#D97706', label: 'Fair',        filter: 'FAIR'  },
   { key: 'POOR',        color: '#DC2626', label: 'Poor',        filter: 'POOR'  },
   { key: 'UNINSPECTED', color: '#94A3B8', label: 'Uninspected', filter: 'never' },
 ];

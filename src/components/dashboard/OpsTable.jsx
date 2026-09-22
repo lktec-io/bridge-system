@@ -46,7 +46,9 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
       </div>
 
       <div className="ops-scroll">
-        <table className="table ops-table">
+        {/* table-stack: below 760px each row becomes a labelled block via the
+            data-label attributes, so nothing scrolls sideways on a phone. */}
+        <table className="table ops-table table-stack">
           <thead>
             <tr>
               <th>Bridge ID / Name</th>
@@ -65,7 +67,7 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
 
               return (
                 <tr key={ins.id} className={ins.conditionStatus === 'POOR' ? 'row-poor' : ''}>
-                  <td>
+                  <td data-label="Bridge ID">
                     <Link to={`/bridges/${ins.bridgeId}`} className="serial-link">
                       {b.serialNumber ?? `#${ins.bridgeId}`}
                     </Link>
@@ -74,7 +76,7 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
                     )}
                   </td>
 
-                  <td>
+                  <td data-label="Region">
                     <span>{b.section ?? '—'}</span>
                     {b.chainage != null && (
                       <div className="muted mono" style={{ fontSize: 'var(--fs-micro)' }}>
@@ -83,13 +85,13 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
                     )}
                   </td>
 
-                  <td className="muted">{b.structureType ?? '—'}</td>
+                  <td className="muted" data-label="Material">{b.structureType ?? '—'}</td>
 
-                  <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>
+                  <td className="mono" style={{ fontSize: 'var(--fs-xs)' }} data-label="Last inspected">
                     {fmtDate(ins.inspectionDate)}
                   </td>
 
-                  <td>
+                  <td data-label="Condition">
                     <ConditionBadge status={ins.conditionStatus} />
                     {hasOpenDefect && (
                       <div className="resolve-status unresolved" style={{ marginTop: 3 }}>
@@ -103,7 +105,7 @@ export default function OpsTable({ rows = [], isAdmin, onApprove, onDelete, busy
                     )}
                   </td>
 
-                  <td>
+                  <td data-label="Operations">
                     <div className="ops-actions no-print">
                       {hasOpenDefect ? (
                         <button

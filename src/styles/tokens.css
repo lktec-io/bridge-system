@@ -1,57 +1,80 @@
 /* ============================================================
-   DESIGN TOKENS — Digital Twin / Infrastructure Terminal
+   DESIGN TOKENS — BMS "Bridges Inspiration" structural identity
    ------------------------------------------------------------
-   Scale rules (deliberate, not decorative):
-     • Body text 15px, section headings 20–24px, KPI metrics 34px+
-     • Panels breathe: 28px interior padding, 20px grid gaps
-     • Controls are touch-grade: inputs 48px, buttons 44px
-     • Radius never exceeds 6px — structural steel, not pills
-     • Orange is strategic only: primary action, active nav, critical
+   Identity rules:
+     • Structural iron / charcoal carries sidebars, headers, command bars
+     • Industrial blue is the INTERFACE accent: active nav, primary action,
+       focus. Ochre is reserved for the FAIR / watch condition state, so an
+       "active control" can never be confused with "needs inspection".
+     • Concrete silver + platinum for surfaces, dividers and backdrops
+     • Geometry clamped 2–4px. No pills, no soft bubbles.
+     • Body 15px · headings 20–24px · KPI readouts 34px+
    ============================================================ */
 :root {
-  /* ── Structural navy scale ───────────────────────────────── */
-  --navy-950:  #060B14;
-  --navy-900:  #0F172A;   /* executive base */
-  --navy-800:  #16233B;
-  --navy-700:  #1E293B;
-  --navy-600:  #283A54;
-  --navy-500:  #35496A;
+  /* ── Structural iron scale (sidebar, headers, command surfaces) ── */
+  --iron-950: #060B14;
+  --iron-900: #0F172A;   /* heaviest structural surface */
+  --iron-800: #1E293B;   /* commanding containers */
+  --iron-700: #334155;
+  --iron-600: #475569;
+  --iron-500: #64748B;
 
-  /* ── Slate / grey scale ──────────────────────────────────── */
-  --slate-600: #475569;
-  --slate-500: #64748B;
-  --slate-400: #94A3B8;
-  --slate-300: #CBD5E1;
-  --slate-200: #E2E8F0;
-  --slate-100: #F1F5F9;
-  --slate-50:  #F8FAFC;
+  /* Legacy aliases — kept so existing rules keep resolving */
+  --navy-950: var(--iron-950);
+  --navy-900: var(--iron-900);
+  --navy-800: var(--iron-800);
+  --navy-700: var(--iron-700);
+  --navy-600: var(--iron-600);
+  --navy-500: var(--iron-500);
 
-  /* ── Safety / industrial orange (strategic use only) ─────── */
-  --accent:        #F97316;
-  --accent-dark:   #EA580C;
-  --accent-darker: #C2410C;
-  --accent-light:  #FFF3EA;
-  --accent-border: #FDBA8C;
-  --accent-glow:   rgba(249, 115, 22, .18);
+  /* ── Concrete silver / platinum (surfaces + dividers) ───────── */
+  --concrete-500: #64748B;
+  --concrete-400: #94A3B8;   /* spec: data dividers, muted structure */
+  --concrete-300: #CBD5E1;
+  --concrete-200: #E2E8F0;   /* spec: split lines, card edges */
+  --concrete-100: #F1F5F9;
+  --concrete-50:  #F8FAFC;   /* spec: clean background surface */
 
-  /* ── Brand (structural navy — links, emphasis) ───────────── */
-  --primary:       #0F172A;
-  --primary-dark:  #060B14;
+  --slate-600: var(--concrete-500);
+  --slate-500: var(--concrete-500);
+  --slate-400: var(--concrete-400);
+  --slate-300: var(--concrete-300);
+  --slate-200: var(--concrete-200);
+  --slate-100: var(--concrete-100);
+  --slate-50:  var(--concrete-50);
+
+  /* ── Industrial blue — the interface accent ─────────────────── */
+  --accent:        #0284C7;
+  --accent-dark:   #0369A1;
+  --accent-darker: #075985;
+  --accent-light:  #E0F2FE;
+  --accent-border: #7DD3FC;
+  --accent-glow:   rgba(2, 132, 199, .22);
+  --accent-hair:   rgba(2, 132, 199, .55);   /* glowing hairlines */
+
+  /* ── Structural ochre — FAIR / watch state, never a control ─── */
+  --ochre:       #D97706;
+  --ochre-dark:  #B45309;
+  --ochre-light: #FEF3C7;
+
+  /* ── Brand (structural iron — links, emphasis) ──────────────── */
+  --primary:       var(--iron-900);
+  --primary-dark:  var(--iron-950);
   --primary-light: #EEF2F7;
 
-  /* ── Condition / status semantics ────────────────────────── */
+  /* ── Condition semantics ────────────────────────────────────── */
   --good:          #15803D;
   --good-light:    #DCFCE7;
   --good-pin:      #16A34A;
-  --fair:          #B45309;
-  --fair-light:    #FEF3C7;
-  --fair-pin:      #EAB308;
+  --fair:          var(--ochre-dark);   /* readable ochre for text */
+  --fair-light:    var(--ochre-light);
+  --fair-pin:      var(--ochre);        /* map pin: needs inspection */
   --poor:          #B91C1C;
   --poor-light:    #FEE2E2;
   --poor-pin:      #DC2626;
-  --none:          #64748B;
-  --none-light:    #F1F5F9;
-  --none-pin:      #94A3B8;
+  --none:          var(--concrete-500);
+  --none-light:    var(--concrete-100);
+  --none-pin:      var(--concrete-400);
 
   /* Aliases kept for existing markup */
   --success:       var(--good);
@@ -60,55 +83,58 @@
   --warning-light: var(--fair-light);
   --danger:        var(--poor);
   --danger-light:  var(--poor-light);
-  --info:          #0E7490;
-  --info-light:    #E0F2FE;
-  --secondary:     var(--slate-500);
+  --info:          var(--accent-dark);
+  --info-light:    var(--accent-light);
+  --secondary:     var(--concrete-500);
 
-  /* ── Surfaces ────────────────────────────────────────────── */
-  --bg:           #F8FAFC;
+  /* ── Surfaces ───────────────────────────────────────────────── */
+  --bg:           var(--concrete-50);
   --bg-card:      #FFFFFF;
   --bg-sunken:    #F5F7FA;
-  --bg-inset:     #EEF2F7;
-  --bg-structure: var(--navy-900);
+  --bg-inset:     #EDF1F6;
+  --bg-structure: var(--iron-900);
 
-  /* ── Lines ───────────────────────────────────────────────── */
-  --border:        #E4E9F0;
-  --border-strong: #CBD5E1;
+  /* ── Lines — concrete split lines ───────────────────────────── */
+  --border:        var(--concrete-200);
+  --border-strong: var(--concrete-300);
   --border-focus:  var(--accent);
   --grid-line:     rgba(15, 23, 42, .05);
+  --hairline:      rgba(148, 163, 184, .45);
 
-  /* ── Text ────────────────────────────────────────────────── */
-  --text:          #334155;
-  --text-strong:   #0F172A;
-  --text-muted:    #64748B;
-  --text-light:    #94A3B8;
-  --text-on-dark:  #E2E8F0;
+  /* ── Text ───────────────────────────────────────────────────── */
+  --text:          var(--iron-700);
+  --text-strong:   var(--iron-900);
+  --text-muted:    var(--concrete-500);
+  --text-light:    var(--concrete-400);
+  --text-on-dark:  var(--concrete-200);
 
-  /* ── Sidebar (structural dark rail) ──────────────────────── */
-  --sidebar-bg:      var(--navy-900);
-  --sidebar-rail:    var(--navy-950);
+  /* ── Sidebar (commanding dark rail in BOTH themes) ──────────── */
+  --sidebar-bg:      var(--iron-900);
+  --sidebar-rail:    var(--iron-950);
   --sidebar-hover:   rgba(255, 255, 255, .055);
-  --sidebar-active:  rgba(249, 115, 22, .13);
+  --sidebar-active:  rgba(2, 132, 199, .16);
   --sidebar-text:    rgba(226, 232, 240, .68);
   --sidebar-divider: rgba(255, 255, 255, .07);
 
-  /* ── Layout dimensions ───────────────────────────────────── */
+  /* ── Layout dimensions ──────────────────────────────────────── */
   --sidebar-w:  268px;
   --header-h:   72px;
   --page-pad-x: 32px;
   --page-pad-y: 28px;
   --page-max:   1680px;
 
-  /* ── Shape — structural, minimal radius (max 6px) ────────── */
+  /* ══════════════════════════════════════════════════════════
+     GEOMETRY — hyper-sharp architectural edges, clamped 2–4px
+     ══════════════════════════════════════════════════════════ */
   --radius-sm: 2px;
-  --radius:    4px;
-  --radius-lg: 6px;
+  --radius:    3px;
+  --radius-lg: 4px;   /* the hard ceiling — nothing is rounder */
 
-  /* ── Elevation — refined, never puffy ────────────────────── */
-  --shadow:    0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .05);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, .05), 0 2px 4px -2px rgba(15, 23, 42, .05);
-  --shadow-lg: 0 10px 20px -5px rgba(15, 23, 42, .12), 0 4px 8px -4px rgba(15, 23, 42, .07);
-  --shadow-xl: 0 24px 48px -12px rgba(6, 11, 20, .45);
+  /* ── Elevation — flat ledger tiles, crisp not puffy ─────────── */
+  --shadow:    0 1px 2px rgba(15, 23, 42, .05);
+  --shadow-md: 0 1px 3px rgba(15, 23, 42, .06), 0 4px 6px -2px rgba(15, 23, 42, .05);
+  --shadow-lg: 0 8px 18px -6px rgba(15, 23, 42, .14), 0 3px 6px -3px rgba(15, 23, 42, .08);
+  --shadow-xl: 0 24px 48px -14px rgba(6, 11, 20, .5);
   --ring:      0 0 0 3px var(--accent-glow);
 
   /* ══════════════════════════════════════════════════════════
@@ -119,27 +145,27 @@
   --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, 'SFMono-Regular',
                Consolas, 'Liberation Mono', monospace;
 
-  --fs-micro:     11.5px;   /* uppercase micro labels only */
+  --fs-micro:     11.5px;
   --fs-xs:        12.5px;
   --fs-sm:        13.5px;
-  --fs-base:      15px;     /* body copy */
+  --fs-base:      15px;
   --fs-md:        17px;
-  --fs-lg:        20px;     /* section headings */
-  --fs-xl:        24px;     /* page titles */
+  --fs-lg:        20px;
+  --fs-xl:        24px;
   --fs-2xl:       28px;
-  --fs-metric:    34px;     /* KPI values */
+  --fs-metric:    34px;
   --fs-metric-lg: 42px;
 
   --lh-tight: 1.25;
   --lh-snug:  1.45;
   --lh-base:  1.6;
 
-  --track-label: .07em;
-  --track-micro: .11em;
+  --track-label:  .07em;
+  --track-micro:  .11em;
   --track-metric: -.03em;
 
   /* ══════════════════════════════════════════════════════════
-     SPACING — spacious architecture
+     SPACING
      ══════════════════════════════════════════════════════════ */
   --sp-1:  4px;
   --sp-2:  8px;
@@ -153,20 +179,18 @@
   --sp-12: 48px;
   --sp-16: 64px;
 
-  /* Panel interiors and grid rhythm */
   --pad-panel:       28px;
   --pad-panel-tight: 20px;
   --pad-head:        18px 28px;
   --gap-grid:        20px;
   --gap-section:     24px;
 
-  /* Data grid cells — rows must not feel compressed */
   --cell-y:       16px;
   --cell-x:       20px;
   --cell-y-tight: 12px;
 
   /* ══════════════════════════════════════════════════════════
-     CONTROLS — generous hit areas
+     CONTROLS — 48px touch targets
      ══════════════════════════════════════════════════════════ */
   --control-h:    48px;
   --control-h-sm: 38px;
@@ -177,39 +201,58 @@
   --btn-pad:      12px 24px;
   --btn-pad-sm:   8px 14px;
   --btn-pad-lg:   15px 32px;
+  --nav-row-h:    48px;   /* sidebar touch target, fixed by spec */
 
-  /* ── Motion ──────────────────────────────────────────────── */
+  /* ── Motion ─────────────────────────────────────────────────── */
   --transition:      140ms cubic-bezier(.4, 0, .2, 1);
   --transition-slow: 260ms cubic-bezier(.4, 0, .2, 1);
 }
 
 /* ============================================================
-   DARK MODE — deep structural navy, same orange accent
+   LIGHT THEME (explicit) — the default workspace.
+   Stated as :root:not([data-theme="dark"]) so the light palette
+   holds whether or not the ThemeProvider has stamped an
+   attribute yet, with no first-paint flash of the wrong theme.
    ============================================================ */
-[data-theme="dark"] {
-  --primary:       #E2E8F0;
+:root:not([data-theme="dark"]) {
+  color-scheme: light;
+}
+
+/* ============================================================
+   DARK THEME — an intentional, cached toggle (bms_theme)
+   ============================================================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --primary:       var(--concrete-200);
   --primary-dark:  #FFFFFF;
   --primary-light: rgba(226, 232, 240, .1);
 
+  --accent:        #38BDF8;
+  --accent-dark:   #0EA5E9;
+  --accent-darker: #0284C7;
+  --accent-light:  rgba(56, 189, 248, .14);
+  --accent-border: rgba(56, 189, 248, .42);
+  --accent-glow:   rgba(56, 189, 248, .26);
+  --accent-hair:   rgba(56, 189, 248, .5);
+
+  --ochre:         #F59E0B;
+  --ochre-dark:    #FBBF24;
+  --ochre-light:   rgba(245, 158, 11, .14);
+
   --good:          #4ADE80;
   --good-light:    rgba(74, 222, 128, .13);
-  --fair:          #FBBF24;
-  --fair-light:    rgba(251, 191, 36, .13);
+  --fair:          var(--ochre-dark);
+  --fair-light:    var(--ochre-light);
+  --fair-pin:      var(--ochre);
   --poor:          #F87171;
   --poor-light:    rgba(248, 113, 113, .13);
-  --none:          #94A3B8;
+  --none:          var(--concrete-400);
   --none-light:    rgba(148, 163, 184, .12);
 
-  --info:          #22D3EE;
-  --info-light:    rgba(34, 211, 238, .13);
-  --secondary:     #94A3B8;
-
-  --accent:        #FB8534;
-  --accent-dark:   #F97316;
-  --accent-darker: #EA580C;
-  --accent-light:  rgba(249, 115, 22, .14);
-  --accent-border: rgba(249, 115, 22, .42);
-  --accent-glow:   rgba(249, 115, 22, .26);
+  --info:          var(--accent);
+  --info-light:    var(--accent-light);
+  --secondary:     var(--concrete-400);
 
   --bg:           #0A1018;
   --bg-card:      #111A28;
@@ -220,23 +263,25 @@
   --border:        #1E2B3D;
   --border-strong: #2C3D54;
   --grid-line:     rgba(226, 232, 240, .06);
+  --hairline:      rgba(148, 163, 184, .3);
 
-  --text:          #CBD5E1;
-  --text-strong:   #F1F5F9;
+  --text:          var(--concrete-300);
+  --text-strong:   var(--concrete-100);
   --text-muted:    #8CA3BC;
   --text-light:    #5E7794;
 
+  /* The rail stays commanding in dark mode too — just deeper */
   --sidebar-bg:      #060B14;
   --sidebar-rail:    #03070D;
   --sidebar-hover:   rgba(255, 255, 255, .05);
-  --sidebar-active:  rgba(249, 115, 22, .15);
+  --sidebar-active:  rgba(56, 189, 248, .16);
   --sidebar-text:    rgba(203, 213, 225, .64);
   --sidebar-divider: rgba(255, 255, 255, .06);
 
   --shadow:    0 1px 2px rgba(0, 0, 0, .5);
-  --shadow-md: 0 4px 8px -2px rgba(0, 0, 0, .55), 0 2px 4px -2px rgba(0, 0, 0, .4);
-  --shadow-lg: 0 12px 28px -8px rgba(0, 0, 0, .7), 0 4px 10px -4px rgba(0, 0, 0, .5);
-  --shadow-xl: 0 28px 56px -14px rgba(0, 0, 0, .8);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, .55), 0 4px 8px -3px rgba(0, 0, 0, .4);
+  --shadow-lg: 0 10px 24px -8px rgba(0, 0, 0, .7), 0 3px 8px -4px rgba(0, 0, 0, .5);
+  --shadow-xl: 0 28px 56px -16px rgba(0, 0, 0, .8);
 }
 
 /* Brief cross-fade while the theme switches */

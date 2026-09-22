@@ -1,13 +1,22 @@
 /* ============================================================
-   BASE — reset, technical typography, focus, scrollbars
+   BASE — reset, anti-truncation rules, technical typography
    ============================================================ */
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* min-width:0 on every box is the single most effective guard against
+   horizontal overflow: flex and grid children default to min-width:auto,
+   which refuses to shrink below their content and pushes the viewport
+   sideways. This is the global half of the "zero truncation" rule. */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Anchor scrolling clears the fixed header */
   scroll-padding-top: calc(var(--header-h) + var(--sp-4));
+  overflow-x: hidden;
 }
 
 body {
@@ -19,8 +28,26 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-variant-numeric: tabular-nums;
+  /* Inherited by everything: long section names, emails, defect text and
+     contractor names wrap instead of stretching their container. */
+  overflow-wrap: break-word;
+  max-width: 100%;
   overflow-x: hidden;
 }
+
+/* Text-bearing elements may break a long unbroken token if they must */
+p, span, strong, em, li, dd, dt, label, td, th, h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: break-word;
+}
+
+/* Identifiers and long addresses are the usual offenders */
+.break-all, .user-card-email, .log-change, .stub-notice code {
+  word-break: break-word;
+}
+
+/* Media and embeds never exceed their column */
+img, svg, video, canvas, iframe { display: block; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; }
 
 /* ── Headings — technical, tightly tracked ────────────────── */
 h1, h2, h3, h4, h5, h6 {
@@ -46,13 +73,13 @@ a {
   transition: color var(--transition);
 }
 a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-offset: 3px; }
-[data-theme="dark"] a:hover { color: var(--accent); }
+:root[data-theme="dark"] a:hover { color: var(--accent); }
 
 /* ══════════════════════════════════════════════════════════
    ENGINEERING DATA TYPOGRAPHY
-   Coordinates, chainage, ratings and measurements are set in
-   tabular mono so digits align down a column and decimals can
-   be compared at a glance.
+   Coordinates, chainage, ratings and counts are set in tabular
+   mono so digits align down a column and decimals compare at a
+   glance — the point of a scanning-oriented asset table.
    ══════════════════════════════════════════════════════════ */
 .mono,
 .metric,
@@ -89,7 +116,6 @@ a:hover { color: var(--accent-dark); text-decoration: underline; text-underline-
 .text-strong { color: var(--text-strong); }
 .nowrap      { white-space: nowrap; }
 
-/* Truncate long engineering text without overlapping */
 .truncate {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -108,10 +134,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 button { cursor: pointer; background: none; border: none; }
 textarea { resize: vertical; }
 
-img, svg { display: block; max-width: 100%; }
-table { border-collapse: collapse; width: 100%; }
-
-/* ── Focus — visible orange ring, no default outlines ─────── */
+/* ── Focus — industrial blue ring, no default outlines ────── */
 *:focus { outline: none; }
 *:focus-visible {
   outline: 2px solid var(--accent);
@@ -136,7 +159,7 @@ textarea:focus-visible {
   border: 2px solid var(--bg-sunken);
   border-radius: var(--radius-sm);
 }
-::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
+::-webkit-scrollbar-thumb:hover { background: var(--concrete-400); }
 
 * { scrollbar-width: thin; scrollbar-color: var(--border-strong) var(--bg-sunken); }
 
@@ -149,7 +172,22 @@ textarea:focus-visible {
   }
 }
 
-/* ── Fluid down-scale on small screens ────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   VIEWPORT SCALING — 320px through 1280px+ with no truncation
+   Tokens themselves step down, so every panel, cell and control
+   scales proportionally instead of being individually patched.
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 720px) {
+  :root {
+    --pad-panel:       20px;
+    --pad-panel-tight: 16px;
+    --pad-head:        16px 20px;
+    --page-pad-x:      20px;
+    --page-pad-y:      20px;
+    --gap-grid:        16px;
+  }
+}
+
 @media (max-width: 600px) {
   :root {
     --fs-base:      14.5px;
@@ -165,5 +203,15 @@ textarea:focus-visible {
     --cell-x:          14px;
     --cell-y:          14px;
     --gap-grid:        12px;
+  }
+}
+
+/* 320–380px: the narrowest supported band */
+@media (max-width: 380px) {
+  :root {
+    --fs-metric:  26px;
+    --page-pad-x: 12px;
+    --pad-panel:  14px;
+    --cell-x:     12px;
   }
 }

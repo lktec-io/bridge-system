@@ -870,6 +870,126 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
 }
 
 /* ══════════════════════════════════════════════════════════
+   FLOATING LABEL FIELDS
+   Markup order is input-then-label so the label can react to
+   :focus and :not(:placeholder-shown) with a sibling selector.
+   The input needs placeholder=" " for the empty check to work.
+   ══════════════════════════════════════════════════════════ */
+.field-float { position: relative; display: block; }
+
+.field-float > .form-control {
+  height: 58px;
+  padding: 22px var(--sp-4) 8px;
+  font-size: var(--fs-base);
+}
+.field-float.has-icon > .form-control { padding-left: 48px; }
+.field-float.has-action > .form-control { padding-right: 52px; }
+
+.field-float > label {
+  position: absolute;
+  left: var(--sp-4);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: top var(--transition), font-size var(--transition),
+              color var(--transition), letter-spacing var(--transition),
+              transform var(--transition);
+}
+.field-float.has-icon > label { left: 48px; }
+
+.field-float > .form-control:focus + label,
+.field-float > .form-control:not(:placeholder-shown) + label {
+  top: 9px;
+  transform: none;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--track-micro);
+  color: var(--text-muted);
+}
+.field-float > .form-control:focus + label { color: var(--accent); }
+
+/* The leading icon tracks the field, not the label */
+.field-float > .input-leading-icon { top: 50%; }
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE TABLE STACKING
+   Wide engineering tables scroll horizontally on desktop, but
+   below 760px each row becomes a labelled block — no sideways
+   scroll, no clipped columns. Cells carry data-label="…".
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  /* Specificity note: dashboard.css loads after this file and sets
+     .ops-table { min-width: 1080px }. Two classes here (.table.table-stack)
+     outrank that single class regardless of import order, so a stacked table
+     collapses to the viewport instead of forcing its scroll container wide.
+     .ops-scroll deliberately keeps overflow-x:auto — non-stacked tables still
+     need to scroll INSIDE their panel rather than pushing the page sideways. */
+  .table.table-stack { min-width: 0; }
+  .table-stack thead { display: none; }
+
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-stack tr {
+    margin-bottom: var(--sp-3);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .table-stack tr:last-child { margin-bottom: 0; }
+
+  .table-stack td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    padding: 11px var(--sp-4);
+    border-bottom: 1px solid var(--border);
+    white-space: normal;
+    text-align: left;
+  }
+  .table-stack td:last-child { border-bottom: none; }
+
+  /* The header text follows the cell down as its own label */
+  .table-stack td::before {
+    content: attr(data-label);
+    flex: 0 0 40%;
+    font-size: var(--fs-micro);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--track-micro);
+    color: var(--text-muted);
+  }
+  .table-stack td:not([data-label])::before { content: none; }
+
+  /* Numeric columns stop being right-aligned once stacked */
+  .table-stack td.num { text-align: left; }
+
+  /* Condition marker moves to the block's leading edge */
+  .table-stack .row-poor td:first-child { box-shadow: none; }
+  .table-stack tr.row-poor { border-left: 4px solid var(--poor); }
+  .table-stack .row-critical td:first-child { box-shadow: none; }
+  .table-stack tr.row-critical { border-left: 4px solid var(--accent); }
+
+  .table-stack .ops-actions,
+  .table-stack .users-action-group { justify-content: flex-start; flex-wrap: wrap; }
+  .table-stack .wrap-cell { min-width: 0; max-width: none; }
+
+  /* Sticky headers are meaningless when stacked */
+  .table-stack thead th { position: static; }
+}
+
+/* ══════════════════════════════════════════════════════════
    RESPONSIVE — components
    ══════════════════════════════════════════════════════════ */
 @media (max-width: 900px) {
@@ -894,4 +1014,19 @@ input[type="radio"] { accent-color: var(--accent); width: 17px; height: 17px; cu
   .modal-footer { flex-direction: column-reverse; }
   .modal-footer .btn { width: 100%; }
   .table thead th, .table tbody td { padding: var(--cell-y) var(--sp-3); }
+  .pagination { padding: var(--sp-3) var(--sp-4); }
+  .pagination-page { min-width: 34px; height: 34px; }
+}
+
+/* 320–400px — the narrowest band must still not scroll sideways */
+@media (max-width: 400px) {
+  .btn { padding: 10px 16px; }
+  .btn-lg { padding: 13px 20px; }
+  .toolbar { gap: var(--sp-2); }
+  .toolbar > .btn { flex: 1 1 auto; justify-content: center; }
+  .seg { width: 100%; }
+  .seg-btn { flex: 1; justify-content: center; padding: 8px 10px; }
+  .card-header { padding: var(--sp-3) var(--sp-4); }
+  .detail-grid { grid-template-columns: minmax(0, 1fr); }
+  .table-stack td::before { flex-basis: 44%; }
 }

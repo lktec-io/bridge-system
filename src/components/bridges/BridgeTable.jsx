@@ -33,7 +33,8 @@ export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDi
   return (
     <section className="ops-panel">
       <div className="ops-scroll">
-        <table className="table ops-table">
+        {/* table-stack + data-label: rows become labelled blocks below 760px */}
+        <table className="table ops-table table-stack">
           <thead>
             <tr>
               <SortHeader column="serial"    label="Bridge ID / Name" sortBy={sortBy} sortDir={sortDir} onSort={onSort} />
@@ -58,7 +59,7 @@ export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDi
 
               return (
                 <tr key={bridge.id} className={cond === 'POOR' ? 'row-poor' : ''}>
-                  <td>
+                  <td data-label="Bridge ID">
                     <Link to={`/bridges/${bridge.id}`} className="serial-link">
                       {bridge.serialNumber}
                     </Link>
@@ -67,17 +68,17 @@ export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDi
                     )}
                   </td>
 
-                  <td>{bridge.section}</td>
-                  <td className="muted">{bridge.structureType}</td>
+                  <td data-label="Region">{bridge.section}</td>
+                  <td className="muted" data-label="Material">{bridge.structureType}</td>
 
-                  <td className="num">
+                  <td className="num" data-label="Chainage">
                     {bridge.chainage != null ? `Km ${Number(bridge.chainage).toFixed(3)}` : '—'}
                   </td>
 
-                  <td className="num muted">{dims}</td>
-                  <td className="num">{bridge._count?.inspections ?? 0}</td>
+                  <td className="num muted" data-label="Span / deck">{dims}</td>
+                  <td className="num" data-label="Inspections">{bridge._count?.inspections ?? 0}</td>
 
-                  <td className="mono" style={{ fontSize: 'var(--fs-xs)' }}>
+                  <td className="mono" style={{ fontSize: 'var(--fs-xs)' }} data-label="Last inspected">
                     {lastIns
                       ? fmtDate(lastIns.inspectionDate)
                       : (
@@ -87,9 +88,9 @@ export default function BridgeTable({ bridges, isAdmin, onDelete, sortBy, sortDi
                       )}
                   </td>
 
-                  <td><ConditionBadge status={cond} /></td>
+                  <td data-label="Condition"><ConditionBadge status={cond} /></td>
 
-                  <td>
+                  <td data-label="Operations">
                     <div className="ops-actions no-print">
                       <Link to={`/bridges/${bridge.id}`} className="btn btn-ghost btn-sm btn-icon" title="Open profile">
                         <FiEye size={13} />
